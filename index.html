@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#7c6cf0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Diário do Bebê</title>
+  <!-- BUILD:HEAD-LINKS -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <!-- /BUILD:HEAD-LINKS -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="app-header-txt">
+      <h1>Diário do Bebê</h1>
+      <p id="header-sub" class="header-sub"></p>
+    </div>
+    <button class="header-menu" id="menu-btn" aria-label="Menu">⋯</button>
+  </header>
+
+  <main id="app">
+    <!-- ===================== VIEW: REGISTRAR ===================== -->
+    <section id="view-register" class="view active">
+      <div id="reminder-banner" class="reminder-banner" hidden>
+        <span class="rb-ico">🍼</span>
+        <div class="rb-body">
+          <b>Hora do leite?</b>
+          <span class="rb-text"></span>
+        </div>
+        <button class="rb-action" id="rb-log">Registrar</button>
+      </div>
+      <div class="today-summary" id="today-summary"></div>
+      <button class="btn-add" id="quick-add">🕐 Adicionar registro anterior</button>
+      <div class="btn-grid" id="btn-grid"></div>
+    </section>
+
+    <!-- ===================== VIEW: CALENDÁRIO ===================== -->
+    <section id="view-calendar" class="view">
+      <div class="cal-header">
+        <button class="cal-nav" id="cal-prev" aria-label="Mês anterior">‹</button>
+        <h2 id="cal-title">—</h2>
+        <button class="cal-nav" id="cal-next" aria-label="Próximo mês">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </section>
+
+    <!-- ===================== VIEW: TENDÊNCIAS ===================== -->
+    <section id="view-trends" class="view">
+      <div class="range-toggle" id="range-toggle">
+        <button data-days="7" class="active">7 dias</button>
+        <button data-days="14">14 dias</button>
+        <button data-days="30">30 dias</button>
+      </div>
+      <div id="charts"></div>
+    </section>
+  </main>
+
+  <!-- ===================== NAV INFERIOR ===================== -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="register"><span class="nav-ico">➕</span><span>Registrar</span></button>
+    <button class="nav-btn" data-view="calendar"><span class="nav-ico">📅</span><span>Calendário</span></button>
+    <button class="nav-btn" data-view="trends"><span class="nav-ico">📈</span><span>Tendências</span></button>
+  </nav>
+
+  <!-- ===================== MODAL: QUANTIDADE DE LEITE ===================== -->
+  <div class="modal-backdrop" id="milk-modal" hidden>
+    <div class="modal">
+      <h3>Quanto de leite? 🍼</h3>
+      <div class="milk-display"><span id="milk-amount">120</span> ml</div>
+      <div class="milk-stepper">
+        <button data-step="-10">−10</button>
+        <input type="number" id="milk-input" value="120" min="0" step="10" inputmode="numeric" />
+        <button data-step="10">+10</button>
+      </div>
+      <div class="milk-presets">
+        <button data-ml="30">30</button><button data-ml="60">60</button>
+        <button data-ml="90">90</button><button data-ml="120">120</button>
+        <button data-ml="150">150</button><button data-ml="180">180</button>
+        <button data-ml="210">210</button><button data-ml="240">240</button>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="milk-cancel">Cancelar</button>
+        <button class="btn-primary" id="milk-save">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: LOG DO DIA ===================== -->
+  <div class="modal-backdrop" id="day-modal" hidden>
+    <div class="modal modal-day">
+      <div class="modal-day-head">
+        <h3 id="day-title">—</h3>
+        <button class="modal-close" id="day-close" aria-label="Fechar">✕</button>
+      </div>
+      <div id="day-summary" class="day-summary"></div>
+      <button class="btn-add" id="day-add">＋ Adicionar registro</button>
+      <div id="day-timeline" class="day-timeline"></div>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: EDITAR/CRIAR EVENTO ===================== -->
+  <div class="modal-backdrop" id="event-modal" hidden>
+    <div class="modal modal-day">
+      <div class="modal-day-head">
+        <h3 id="event-modal-title">Novo registro</h3>
+        <button class="modal-close" id="event-close" aria-label="Fechar">✕</button>
+      </div>
+
+      <div class="field">
+        <span>Evento</span>
+        <div class="kind-grid" id="kind-grid"></div>
+      </div>
+
+      <label class="field">
+        <span>Data e hora</span>
+        <input type="datetime-local" id="event-time" />
+      </label>
+
+      <div class="field" id="event-milk-field" hidden>
+        <span>Quantidade de leite (ml)</span>
+        <input type="number" id="event-milk" min="0" step="10" inputmode="numeric" value="120" />
+        <div class="milk-presets" id="event-milk-presets">
+          <button type="button" data-ml="30">30</button><button type="button" data-ml="60">60</button>
+          <button type="button" data-ml="90">90</button><button type="button" data-ml="120">120</button>
+          <button type="button" data-ml="150">150</button><button type="button" data-ml="180">180</button>
+          <button type="button" data-ml="210">210</button><button type="button" data-ml="240">240</button>
+        </div>
+      </div>
+
+      <div class="field" id="event-diaper-field" hidden>
+        <span>Tipo de fralda</span>
+        <div class="segmented" id="diaper-seg">
+          <button type="button" data-poop="1">💩 Com cocô</button>
+          <button type="button" data-poop="0">💧 Sem cocô</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-danger" id="event-delete" hidden>Excluir</button>
+        <button class="btn-primary" id="event-save">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: MENU / BACKUP ===================== -->
+  <div class="modal-backdrop" id="menu-modal" hidden>
+    <div class="modal">
+      <div class="modal-day-head">
+        <h3>Menu</h3>
+        <button class="modal-close" id="menu-close" aria-label="Fechar">✕</button>
+      </div>
+      <div class="menu-list">
+        <button id="menu-sync">☁️ Sincronização</button>
+        <button id="menu-reminders">🔔 Lembretes de leite</button>
+        <button id="menu-notify">📲 Permitir notificações</button>
+        <button id="menu-export">⬇️ Exportar backup (.json)</button>
+        <button id="menu-import">⬆️ Importar backup (.json)</button>
+      </div>
+      <p class="menu-note">O lembrete avisa 3h após o último leite (pausado durante o sono noturno). As notificações do sistema só disparam com o app aberto — inclusive em segundo plano.</p>
+      <input type="file" id="import-file" accept="application/json,.json" hidden />
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: SINCRONIZAÇÃO ===================== -->
+  <div class="modal-backdrop" id="sync-modal" hidden>
+    <div class="modal">
+      <div class="modal-day-head">
+        <h3>Sincronização na nuvem</h3>
+        <button class="modal-close" id="sync-close" aria-label="Fechar">✕</button>
+      </div>
+
+      <div id="sync-unconfigured" hidden>
+        <p class="menu-note">A sincronização ainda não foi configurada. Siga o <b>FIREBASE-SETUP.md</b> para conectar sua conta gratuita do Firebase (grátis, ~3 min) e ativar a sincronização entre os aparelhos.</p>
+      </div>
+
+      <div id="sync-signed-out" hidden>
+        <p class="menu-note">Entre com a conta da família (o mesmo e-mail/senha nos dois celulares) para sincronizar os dados.</p>
+        <label class="field"><span>E-mail</span><input type="email" id="sync-email" autocomplete="username" inputmode="email" /></label>
+        <label class="field"><span>Senha</span><input type="password" id="sync-pass" autocomplete="current-password" /></label>
+        <div class="modal-actions">
+          <button class="btn-ghost" id="sync-signup">Criar conta</button>
+          <button class="btn-primary" id="sync-signin">Entrar</button>
+        </div>
+      </div>
+
+      <div id="sync-signed-in" hidden>
+        <p class="menu-note" id="sync-account">Sincronizando</p>
+        <button class="btn-ghost" id="sync-signout">Sair da sincronização</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- BUILD:FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <!-- /BUILD:FIREBASE -->
+  <script src="app.js"></script>
+</body>
+</html>
