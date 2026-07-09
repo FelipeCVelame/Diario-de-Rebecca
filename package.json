@@ -1,0 +1,14 @@
+{
+  "name": "diario-da-rebecca",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "PWA de acompanhamento da rotina da bebê (Rebecca).",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8"
+  }
+}

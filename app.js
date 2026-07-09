@@ -3,6 +3,13 @@
    Camada de dados isolada (STORE) para facilitar troca por nuvem no futuro.
    ========================================================================= */
 
+/* ---- Domínio: módulos ES puros e testados (test/domain/). Fonte única. ---- */
+import { dayKey, fmtDuration } from "./src/domain/time.js";
+import { summaryForDay } from "./src/domain/summary.js";
+import { milkReminderState } from "./src/domain/reminder.js";
+import { seriesForRange, activeAvg } from "./src/domain/trends.js";
+import { mergeRemote as mergeRemoteFn } from "./src/domain/sync.js";
+
 /* ------------------------------ Ícones (SVG) ----------------------------- */
 /* Conjunto de ícones "duotone" (forma sólida + camadas translúcidas na mesma
    cor), grade 24, feito à mão — no lugar de emoji nativo (renderiza diferente
@@ -149,12 +156,9 @@ const STORE = (() => {
       stamped.forEach(_emit);
     },
     mergeRemote(remote) {
-      if (!remote || !remote.id) return false;
-      const list = _read();
-      const i = list.findIndex(e => e.id === remote.id);
-      if (i < 0) { list.push(remote); _write(list); return true; }
-      if ((remote.updatedAt || 0) > (list[i].updatedAt || 0)) { list[i] = remote; _write(list); return true; }
-      return false;
+      const res = mergeRemoteFn(_read(), remote);
+      if (res.changed) _write(res.list);
+      return res.changed;
     },
     babyEvents() { return this.all().filter(e => !isAppt(e.type)); },
     appointments() { return this.all().filter(e => isAppt(e.type)); },
@@ -172,34 +176,13 @@ const SETTINGS = {
 };
 
 /* ===================== Lembrete de leite (3h) ===================== */
-const MILK_REMINDER_MS = 3 * 60 * 60 * 1000;
+/* Regras puras em src/domain/reminder.js (isNightSleeping, milkReminderState). */
 const remindersOn = () => SETTINGS.get().remindersEnabled !== false;
-
-function isNightSleeping() {
-  const all = STORE.babyEvents();
-  let lastNight = -Infinity, lastWake = -Infinity;
-  for (const e of all) {
-    const t = new Date(e.ts).getTime();
-    if (e.type === "night_start") lastNight = Math.max(lastNight, t);
-    else if (e.type === "wake_morning") lastWake = Math.max(lastWake, t);
-  }
-  if (lastNight <= lastWake) return false;
-  return (Date.now() - lastNight) < 16 * 60 * 60 * 1000;
-}
-
-function milkReminderState() {
-  const milks = STORE.babyEvents().filter(e => e.type === "milk");
-  const last = milks.length ? milks[milks.length - 1] : null;
-  if (!last) return { active: false, last: null };
-  const elapsed = Date.now() - new Date(last.ts).getTime();
-  const due = elapsed >= MILK_REMINDER_MS;
-  return { active: due && !isNightSleeping(), due, elapsed, lastTs: last.ts };
-}
 
 function refreshReminder() {
   const banner = el("#reminder-banner");
   if (!remindersOn()) { banner.hidden = true; return; }
-  const st = milkReminderState();
+  const st = milkReminderState(STORE.babyEvents());
   if (st.active) {
     banner.hidden = false;
     banner.querySelector(".rb-text").textContent = `Faz ${fmtDuration(st.elapsed)} desde o último leite`;
@@ -230,22 +213,8 @@ async function maybeNotify(st) {
 }
 
 /* ------------------------------ Utilidades ------------------------------- */
-function dayKey(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+/* dayKey e fmtDuration importados de src/domain/time.js. */
 const fmtTime = (d) => d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-function fmtDuration(ms) {
-  if (ms <= 0) return "0min";
-  const totalMin = Math.round(ms / 60000);
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  if (h === 0) return `${m}min`;
-  if (m === 0) return `${h}h`;
-  return `${h}h${String(m).padStart(2, "0")}`;
-}
 const escapeHtml = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function toLocalInput(d) {
@@ -253,52 +222,8 @@ function toLocalInput(d) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-/* -------------------- Pareamento de intervalos de sono ------------------- */
-function buildIntervals(events, startType, endType) {
-  const intervals = [];
-  let open = null;
-  for (const e of events) {
-    if (e.type === startType) {
-      open = e;
-    } else if (e.type === endType && open) {
-      intervals.push({
-        start: new Date(open.ts),
-        end: new Date(e.ts),
-        ms: new Date(e.ts) - new Date(open.ts),
-        dayKey: dayKey(new Date(open.ts)),
-      });
-      open = null;
-    }
-  }
-  return intervals;
-}
-
-function summaryForDay(dateKey) {
-  const all = STORE.babyEvents();
-  const evts = all.filter(e => dayKey(new Date(e.ts)) === dateKey);
-
-  const milkMl = evts.filter(e => e.type === "milk").reduce((s, e) => s + (Number(e.amountMl) || 0), 0);
-
-  const naps = buildIntervals(all, "nap_start", "nap_end").filter(i => i.dayKey === dateKey);
-  const napMs = naps.reduce((s, i) => s + i.ms, 0);
-
-  const nights = buildIntervals(all, "night_start", "wake_morning").filter(i => i.dayKey === dateKey);
-  const nightMs = nights.reduce((s, i) => s + i.ms, 0);
-
-  const count = (t) => evts.filter(e => e.type === t).length;
-
-  return {
-    milkMl, milkCount: count("milk"),
-    napMs, napCount: naps.length,
-    nightMs, nightCount: nights.length,
-    diapers: count("diaper_wet") + count("diaper_poop"),
-    poops: count("diaper_poop"),
-    meals: count("snack") + count("lunch") + count("dinner"),
-    sick: count("sick") > 0,
-    total: evts.length,
-    events: evts,
-  };
-}
+/* buildIntervals e summaryForDay importados de src/domain/summary.js
+   (agora recebem os eventos como argumento em vez de ler o STORE). */
 
 /* =========================================================================
    UI
@@ -342,7 +267,7 @@ function onLog(type) {
 
 /* -------- Resumo de hoje -------- */
 function refreshToday() {
-  const s = summaryForDay(dayKey(new Date()));
+  const s = summaryForDay(STORE.babyEvents(), dayKey(new Date()));
   el("#today-summary").innerHTML = `
     <div class="stat"><span class="stat-ico chip-food">${svgIcon("bottle")}</span><div class="stat-val">${s.milkMl}<small> ml</small></div><div class="stat-lbl">Leite · ${s.milkCount}x</div></div>
     <div class="stat"><span class="stat-ico chip-nap">${svgIcon("moon")}</span><div class="stat-val">${fmtDuration(s.napMs)}</div><div class="stat-lbl">Sonecas · ${s.napCount}x</div></div>
@@ -513,7 +438,7 @@ function openDay(key, date, keepScroll = false) {
   const tl = el("#day-timeline");
   const prevScroll = keepScroll ? el("#day-modal .modal-day").scrollTop : 0;
 
-  const s = summaryForDay(key);
+  const s = summaryForDay(STORE.babyEvents(), key);
   el("#day-title").textContent = date.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
   el("#day-summary").innerHTML = `
     <div class="sum-item"><b>${s.milkMl} ml</b><span>Leite · ${s.milkCount} mamadas</span></div>
@@ -650,20 +575,7 @@ function initAgenda() {
 }
 
 /* ============================== Tendências =============================== */
-function seriesForRange(days) {
-  const out = [];
-  const today = new Date();
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
-    const s = summaryForDay(dayKey(d));
-    out.push({
-      date: d, milkMl: s.milkMl, milkCount: s.milkCount,
-      napMs: s.napMs, napCount: s.napCount, nightMs: s.nightMs,
-      diapers: s.diapers, poops: s.poops,
-    });
-  }
-  return out;
-}
+/* seriesForRange e activeAvg importados de src/domain/trends.js. */
 
 function barChartSVG(series, valueFn, color, avg) {
   const vals = series.map(valueFn);
@@ -700,13 +612,8 @@ function fmtBarVal(v) { return v >= 10 ? String(Math.round(v)) : (Number.isInteg
 
 function renderTrends(days) {
   currentRange = days;
-  const series = seriesForRange(days);
+  const series = seriesForRange(STORE.babyEvents(), days);
   const hasData = series.some(d => d.milkMl || d.milkCount || d.napMs || d.napCount || d.nightMs || d.diapers || d.poops);
-
-  const activeAvg = (valFn) => {
-    const active = series.map(valFn).filter(v => v > 0);
-    return active.length ? active.reduce((a, b) => a + b, 0) / active.length : 0;
-  };
 
   const cards = [
     { title: "Leite por dia",            color: "var(--c-food)",   val: d => d.milkMl,            fmtAvg: v => `média ${Math.round(v)} ml/dia` },
@@ -724,7 +631,7 @@ function renderTrends(days) {
     return;
   }
   wrap.innerHTML = cards.map(c => {
-    const avg = activeAvg(c.val);
+    const avg = activeAvg(series, c.val);
     const activeDays = series.map(c.val).filter(v => v > 0).length;
     const avgText = avg > 0 ? `${c.fmtAvg(avg)} · ${activeDays} ${activeDays === 1 ? "dia" : "dias"}` : "—";
     return `

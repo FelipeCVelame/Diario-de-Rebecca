@@ -1,0 +1,20 @@
+node_modules/
+.vitest/
+coverage/
+*.log
+
+# Config local do Claude Code (permissões específicas desta máquina)
+.claude/settings.local.json
+
+# Ferramentas/skills instaladas localmente (não fazem parte do app)
+agent-skills/
+web-quality-skills/
+bencium-claude-code-design-skill/
+claude-code-skills/
+planning-with-files/
+
+# Backups e saídas de build locais (regeneráveis)
+_backup_pre_git_sync/
+dist/
+dist.rar
+DiarioDoBebe.html
