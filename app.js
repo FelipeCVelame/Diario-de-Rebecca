@@ -1,45 +1,104 @@
 /* =========================================================================
-   Diário do Bebê — PWA local-first
+   Diário da Rebecca — PWA local-first
    Camada de dados isolada (STORE) para facilitar troca por nuvem no futuro.
    ========================================================================= */
 
+/* ------------------------------ Ícones (SVG) ----------------------------- */
+/* Conjunto de ícones "duotone" (forma sólida + camadas translúcidas na mesma
+   cor), grade 24, feito à mão — no lugar de emoji nativo (renderiza diferente
+   por plataforma/fonte e já causou desalinhamento). `currentColor` herda a
+   cor da categoria, então cada ícone fica colorido pelo chip que o envolve. */
+const ICONS = {
+  sunrise:    `<path d="M12 3.5a1 1 0 0 1 1 1v1.8a1 1 0 1 1-2 0V4.5a1 1 0 0 1 1-1z"/><path d="M5.8 6.2a1 1 0 0 1 1.4 0L8.4 7.4A1 1 0 1 1 7 8.8L5.8 7.6a1 1 0 0 1 0-1.4z"/><path d="M18.2 6.2a1 1 0 0 1 0 1.4L17 8.8a1 1 0 1 1-1.4-1.4l1.2-1.2a1 1 0 0 1 1.4 0z"/><circle cx="12" cy="14.4" r="4.3"/><path d="M2.8 18.6a1 1 0 0 1 1-1h16.4a1 1 0 1 1 0 2H3.8a1 1 0 0 1-1-1z"/>`,
+  bottle:     `<path d="M10.2 3.8h3.6a.8.8 0 0 1 .8.8v1.3c1.1.5 1.9 1.6 1.9 2.9v8.2a2.8 2.8 0 0 1-2.8 2.8h-2.4a2.8 2.8 0 0 1-2.8-2.8V8.8c0-1.3.8-2.4 1.9-2.9V4.6a.8.8 0 0 1 .8-.8z"/><path d="M9.4 12h5.2v5a1.3 1.3 0 0 1-1.3 1.3h-2.6A1.3 1.3 0 0 1 9.4 17z" fill-opacity=".45"/><path d="M9.7 9.4h4.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" fill="none"/>`,
+  utensils:   `<path d="M8.4 3a.7.7 0 0 1 .7.7v3.5a.45.45 0 1 0 .9 0V3.7a.7.7 0 1 1 1.4 0v3.5a.45.45 0 1 0 .9 0V3.7a.7.7 0 1 1 1.4 0v3.9a1.9 1.9 0 0 1-1.5 1.86V20.3a.95.95 0 1 1-1.9 0V9.46A1.9 1.9 0 0 1 8.8 7.6V3.7a.7.7 0 0 1 .7-.7z" fill-opacity=".85"/><path d="M16.4 3.2c-1.7 1-1.9 4.75-1 6.85.35.85.9 1.35.9 1.35V20.3a1 1 0 1 0 2 0V3.2z"/>`,
+  cookie:     `<circle cx="12" cy="12.3" r="7.6" fill-opacity=".45"/><circle cx="12" cy="12.3" r="7.6" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="9.1" cy="10.3" r="1.05"/><circle cx="14.4" cy="10" r="1.05"/><circle cx="12.2" cy="14.4" r="1.05"/><circle cx="15.6" cy="14" r="1.05"/><circle cx="9.6" cy="15" r="1.05"/>`,
+  bowl:       `<path d="M4.7 11.1a11.6 11.6 0 0 1 14.6 0 1 1 0 0 1-.6 1.78H5.3a1 1 0 0 1-.6-1.78z" fill-opacity=".4"/><path d="M3.2 12.4h17.6a1 1 0 0 1 1 1.06A9.4 9.4 0 0 1 12.6 22h-1.2a9.4 9.4 0 0 1-9.2-8.54 1 1 0 0 1 1-1.06z"/><circle cx="9.4" cy="10.1" r=".85"/><circle cx="14.7" cy="9.9" r=".85"/>`,
+  diaper:     `<path d="M3.6 7h16.8a1 1 0 0 1 1 1.14c-.5 6.94-4.9 11.96-9.4 11.96S2.6 15.08 2.1 8.14A1 1 0 0 1 3.6 7z" fill-opacity=".45"/><path d="M3.32 11.85a20.5 20.5 0 0 1-.63-3.35A1 1 0 0 1 3.6 7h16.8a1 1 0 0 1 1 1.15c-.1 1.15-.32 2.28-.63 3.35A1 1 0 0 1 20 11.85H4a1 1 0 0 1-.68-.85z" fill-opacity=".85"/><rect x="10.1" y="10.6" width="3.8" height="2.3" rx="1.15"/>`,
+  droplet:    `<path d="M12 3.4c3.6 4.35 5.7 7.3 5.7 9.95a5.7 5.7 0 0 1-11.4 0c0-2.65 2.1-5.6 5.7-9.95z"/><path d="M8.3 13.9a3.7 3.7 0 0 0 2.75 3.55" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" fill="none" opacity=".5"/>`,
+  poop:       `<path d="M7.5 20h9a2.6 2.6 0 0 0 .6-5.1 2.5 2.5 0 0 0-1.75-3.95A2.2 2.2 0 0 0 13.7 8 2.1 2.1 0 0 0 12 5.1 2.1 2.1 0 0 0 10.3 8a2.2 2.2 0 0 0-1.85 3.35A2.5 2.5 0 0 0 6.9 14.9 2.6 2.6 0 0 0 7.5 20z"/><path d="M9.3 12.5c1 .55 3.4.55 4.4 0M8.4 16.3c1.95.85 5.2.85 7.1 0" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" fill="none" opacity=".5"/>`,
+  moon:       `<path d="M20.2 14.4A8.2 8.2 0 0 1 9.75 3.95a8.2 8.2 0 1 0 10.45 10.45z"/><path d="M16.6 5.6l.5 1.05 1.05.5-1.05.5-.5 1.05-.5-1.05-1.05-.5 1.05-.5z"/>`,
+  napend:     `<circle cx="12" cy="13" r="6.6" fill-opacity=".4"/><circle cx="12" cy="13" r="6.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 9.4V13l2.3 1.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M4.9 5l1.9-1.6M19.1 5l-1.9-1.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>`,
+  moonstars:  `<path d="M20.2 14.4A8.2 8.2 0 0 1 9.75 3.95a7 7 0 0 0-1 .1A8.2 8.2 0 1 0 20.2 14.4z"/><path d="M17 3.6l.65 1.4 1.4.65-1.4.65-.65 1.4-.65-1.4-1.4-.65 1.4-.65z"/><circle cx="20.3" cy="8.4" r=".7"/>`,
+  thermometer:`<path d="M12 3.6a2 2 0 0 0-2 2v8.5a3.5 3.5 0 1 0 4 0V5.6a2 2 0 0 0-2-2z" fill-opacity=".4"/><path d="M12 3.6a2 2 0 0 0-2 2v8.5a3.5 3.5 0 1 0 4 0V5.6a2 2 0 0 0-2-2z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="17.3" r="1.9"/><path d="M12 8.5v6.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>`,
+  pulse:      `<path d="M12.9 5.4a5 5 0 0 1 7.4 6.7l-7 7.3a1.9 1.9 0 0 1-2.6 0l-7-7.3a5 5 0 0 1 7.4-6.7l.9.95z" fill-opacity=".35"/><path d="M3 12.4h3.4l1.7-3.9 2.4 6.6 1.7-3.9h4.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+  book:       `<path d="M12 6.6c-1.6-1.1-4-1.5-6.3-1.5a.7.7 0 0 0-.7.7v11.3c0 .4.3.7.7.7 2.3 0 4.7.4 6.3 1.5z" fill-opacity=".45"/><path d="M12 6.6c1.6-1.1 4-1.5 6.3-1.5.4 0 .7.3.7.7v11.3a.7.7 0 0 1-.7.7c-2.3 0-4.7.4-6.3 1.5z" fill-opacity=".8"/><path d="M12 6.6v12.4" stroke="currentColor" stroke-width="1.3" opacity=".5"/>`,
+  bookmark:   `<path d="M6.6 4.3h10.8a.6.6 0 0 1 .6.6v14.9l-6-4.3-6 4.3V4.9a.6.6 0 0 1 .6-.6z"/>`,
+  calendar:   `<rect x="3.6" y="5.2" width="16.8" height="15" rx="2.6" fill-opacity=".35"/><rect x="3.6" y="5.2" width="16.8" height="15" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.6 9.6h16.8" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8.2 3.4v3.6M15.8 3.4v3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8.3" cy="13.6" r="1.1"/><circle cx="12" cy="13.6" r="1.1"/><circle cx="15.7" cy="13.6" r="1.1"/><circle cx="8.3" cy="17.2" r="1.1"/><circle cx="12" cy="17.2" r="1.1"/>`,
+  calcheck:   `<rect x="3.6" y="5.2" width="16.8" height="15" rx="2.6" fill-opacity=".35"/><rect x="3.6" y="5.2" width="16.8" height="15" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.6 9.6h16.8" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8.2 3.4v3.6M15.8 3.4v3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M8.3 14.5l2.2 2.2 4.6-4.7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+  chart:      `<path d="M4 20V4M4 20h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="6.3" y="13.5" width="2.8" height="5" rx="1" fill-opacity=".55"/><rect x="10.6" y="9.5" width="2.8" height="9" rx="1" fill-opacity=".78"/><rect x="14.9" y="6" width="2.8" height="12.5" rx="1"/>`,
+  plus:       `<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" fill="none"/>`,
+  clock:      `<circle cx="12" cy="12" r="8.2" fill-opacity=".35"/><circle cx="12" cy="12" r="8.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 7.6V12l3.1 1.85" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+  close:      `<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>`,
+  chevL:      `<path d="M14.5 6l-6 6 6 6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+  chevR:      `<path d="M9.5 6l6 6-6 6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+  dots:       `<circle cx="5.5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18.5" cy="12" r="1.5"/>`,
+  cloud:      `<path d="M7.4 18.4h9.6a3.6 3.6 0 0 0 .3-7.2 5.2 5.2 0 0 0-10.1-1.6 3.9 3.9 0 0 0 .2 8.8z" fill-opacity=".45"/><path d="M7.4 18.4h9.6a3.6 3.6 0 0 0 .3-7.2 5.2 5.2 0 0 0-10.1-1.6 3.9 3.9 0 0 0 .2 8.8z" fill="none" stroke="currentColor" stroke-width="1.4"/>`,
+  bell:       `<path d="M6 16.2h12l-1.4-2.1V10.3a4.8 4.8 0 0 0-9.6 0v3.8z" fill-opacity=".4"/><path d="M6 16.2h12l-1.4-2.1V10.3a4.8 4.8 0 0 0-9.6 0v3.8z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M10 19.2a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.5" fill="none"/>`,
+  device:     `<rect x="6.8" y="3.4" width="10.4" height="17.2" rx="2.4" fill-opacity=".35"/><rect x="6.8" y="3.4" width="10.4" height="17.2" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M10.7 17.5h2.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`,
+  download:   `<path d="M12 3.6v10.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M7.8 10.4l4.2 4.2 4.2-4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="4.6" y="18.4" width="14.8" height="2.2" rx="1.1"/>`,
+  upload:     `<path d="M12 20.4V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M7.8 13.6L12 9.4l4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="4.6" y="3.4" width="14.8" height="2.2" rx="1.1"/>`,
+  trash:      `<path d="M5 7h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M7.2 7.6l.85 11.4A1.6 1.6 0 0 0 9.65 20.4h4.7a1.6 1.6 0 0 0 1.6-1.4l.85-11.4z" fill-opacity=".45"/>`,
+  dot:        `<circle cx="12" cy="12" r="2.5"/>`,
+};
+function svgIcon(name, cls = "") {
+  const p = ICONS[name] || ICONS.dot;
+  return `<svg class="ico${cls ? " " + cls : ""}" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+}
+function hydrateIcons(root = document) {
+  root.querySelectorAll("[data-icon]").forEach(e => { e.innerHTML = svgIcon(e.dataset.icon); });
+}
+
 /* ----------------------------- Definição de eventos ---------------------- */
 const EVENT_TYPES = {
-  wake_morning: { label: "Acordou",              icon: "☀️", cat: "wake",   color: "var(--c-wake)"   },
-  milk:         { label: "Comeu — Leite",        icon: "🍼", cat: "food",   color: "var(--c-food)", needsAmount: true },
-  snack:        { label: "Comeu — Lanche",       icon: "🍎", cat: "food",   color: "var(--c-food)"   },
-  lunch:        { label: "Comeu — Almoço",       icon: "🍽️", cat: "food",   color: "var(--c-food)"   },
-  diaper_poop:  { label: "Fralda com cocô",      icon: "💩", cat: "diaper", color: "var(--c-diaper)" },
-  diaper_wet:   { label: "Troca sem cocô",       icon: "💧", cat: "diaper", color: "var(--c-diaper)" },
-  nap_start:    { label: "Dormiu (soneca)",      icon: "😴", cat: "nap",    color: "var(--c-nap)"    },
-  nap_end:      { label: "Acordou (soneca)",     icon: "🥱", cat: "nap",    color: "var(--c-nap)"    },
-  night_start:  { label: "Dormiu (noite)",       icon: "🌙", cat: "night",  color: "var(--c-night)"  },
-  sick:         { label: "Doente",               icon: "🤒", cat: "sick",   color: "var(--c-sick)"   },
+  wake_morning: { label: "Acordou",         ic: "sunrise",     cat: "wake"   },
+  milk:         { label: "Comeu — Leite",   ic: "bottle",      cat: "food", needsAmount: true },
+  snack:        { label: "Comeu — Lanche",  ic: "cookie",      cat: "food"   },
+  lunch:        { label: "Comeu — Almoço",  ic: "utensils",    cat: "food"   },
+  dinner:       { label: "Comeu — Jantar",  ic: "bowl",        cat: "food"   },
+  diaper_poop:  { label: "Fralda com cocô", ic: "poop",        cat: "diaper" },
+  diaper_wet:   { label: "Troca sem cocô",  ic: "droplet",     cat: "diaper" },
+  nap_start:    { label: "Dormiu (soneca)", ic: "moon",        cat: "nap"    },
+  nap_end:      { label: "Acordou (soneca)",ic: "napend",      cat: "nap"    },
+  night_start:  { label: "Dormiu (noite)",  ic: "moonstars",   cat: "night"  },
+  sick:         { label: "Doente",          ic: "thermometer", cat: "sick"   },
+  appt_medical: { label: "Consulta médica", ic: "pulse",       cat: "appt"   },
+  appt_class:   { label: "Aula",            ic: "book",        cat: "appt"   },
+  appt_other:   { label: "Compromisso",     ic: "bookmark",    cat: "appt"   },
 };
+
+/* Refeições sólidas unificadas no botão "Comida". */
+const FOOD_TYPES = ["snack", "lunch", "dinner"];
+const isFoodSolid = (type) => FOOD_TYPES.includes(type);
+
+/* Tipos de compromisso (aba Agenda). */
+const APPT_TYPES = ["appt_medical", "appt_class", "appt_other"];
+const isAppt = (type) => APPT_TYPES.includes(type);
 
 /* No editor, "fralda" é um único tipo com um toggle cocô/sem cocô, que mapeia
    para os tipos reais diaper_poop / diaper_wet ao salvar. */
 const KIND_META = {
-  wake_morning: { icon: "☀️", label: "Acordou" },
-  milk:         { icon: "🍼", label: "Leite" },
-  snack:        { icon: "🍎", label: "Lanche" },
-  lunch:        { icon: "🍽️", label: "Almoço" },
-  diaper:       { icon: "🧷", label: "Fralda" },
-  nap_start:    { icon: "😴", label: "Dormiu (soneca)" },
-  nap_end:      { icon: "🥱", label: "Acordou (soneca)" },
-  night_start:  { icon: "🌙", label: "Dormiu (noite)" },
-  sick:         { icon: "🤒", label: "Doente" },
+  wake_morning: { ic: "sunrise",     label: "Acordou" },
+  milk:         { ic: "bottle",      label: "Leite" },
+  snack:        { ic: "cookie",      label: "Lanche" },
+  lunch:        { ic: "utensils",    label: "Almoço" },
+  dinner:       { ic: "bowl",        label: "Jantar" },
+  diaper:       { ic: "diaper",      label: "Fralda" },
+  nap_start:    { ic: "moon",        label: "Dormiu (soneca)" },
+  nap_end:      { ic: "napend",      label: "Acordou (soneca)" },
+  night_start:  { ic: "moonstars",   label: "Dormiu (noite)" },
+  sick:         { ic: "thermometer", label: "Doente" },
 };
-const EDITOR_KINDS = ["wake_morning", "milk", "snack", "lunch", "diaper", "nap_start", "nap_end", "night_start", "sick"];
+const EDITOR_KINDS = ["wake_morning", "milk", "snack", "lunch", "dinner", "diaper", "nap_start", "nap_end", "night_start", "sick"];
 const kindOf = (type) => (type === "diaper_poop" || type === "diaper_wet") ? "diaper" : type;
 const resolveType = (kind, poop) => kind === "diaper" ? (poop ? "diaper_poop" : "diaper_wet") : kind;
 
 // Ordem/exibição dos botões. `wide` ocupa a linha inteira.
+// O item `food` é sintético: abre o seletor de refeição (lanche/almoço/jantar).
 const BUTTON_LAYOUT = [
   { type: "wake_morning", wide: true },
   { type: "milk" },
-  { type: "snack" },
-  { type: "lunch" },
+  { type: "food", food: true, label: "Comida", ic: "utensils", cat: "food" },
   { type: "diaper_wet" },
   { type: "diaper_poop" },
   { type: "nap_start" },
@@ -50,9 +109,6 @@ const BUTTON_LAYOUT = [
 
 /* =========================================================================
    STORE — persistência local (localStorage) + preparado para sync.
-   Cada evento carrega `updatedAt` (ms) para resolver conflitos (last-write-wins)
-   e exclusões são LÓGICAS (`deleted:true`) para que apaguem também na nuvem.
-   `onEventWrite` é o gancho que a camada Cloud usa para enviar cada alteração.
    ========================================================================= */
 let onEventWrite = null;
 
@@ -63,13 +119,13 @@ const STORE = (() => {
   const _emit = (evt) => { if (evt && onEventWrite) { try { onEventWrite(evt); } catch { /* offline */ } } };
 
   return {
-    _raw() { return _read(); },                                   // inclui tombstones
+    _raw() { return _read(); },
     all() { return _read().filter(e => !e.deleted).sort((a, b) => new Date(a.ts) - new Date(b.ts)); },
     add(type, extra = {}) {
       const evt = { id: newId(), type, ts: new Date().toISOString(), updatedAt: Date.now(), ...extra };
       const list = _read(); list.push(evt); _write(list); _emit(evt); return evt;
     },
-    put(evt) {                                                    // insere ou substitui por id
+    put(evt) {
       evt = { ...evt, updatedAt: Date.now() };
       const list = _read();
       const i = list.findIndex(e => e.id === evt.id);
@@ -81,17 +137,16 @@ const STORE = (() => {
       const i = list.findIndex(e => e.id === id);
       if (i >= 0) { list[i] = { ...list[i], ...patch, updatedAt: Date.now() }; _write(list); _emit(list[i]); }
     },
-    remove(id) {                                                  // exclusão lógica (tombstone)
+    remove(id) {
       const list = _read();
       const i = list.findIndex(e => e.id === id);
       if (i >= 0) { list[i] = { ...list[i], deleted: true, updatedAt: Date.now() }; _write(list); _emit(list[i]); }
     },
-    replaceAll(list) {                                            // importação de backup
+    replaceAll(list) {
       const stamped = list.map(e => ({ ...e, updatedAt: e.updatedAt || Date.now() }));
       _write(stamped);
       stamped.forEach(_emit);
     },
-    // Aplica um evento vindo da nuvem SEM reenviar (evita laço). Retorna true se mudou.
     mergeRemote(remote) {
       if (!remote || !remote.id) return false;
       const list = _read();
@@ -100,7 +155,9 @@ const STORE = (() => {
       if ((remote.updatedAt || 0) > (list[i].updatedAt || 0)) { list[i] = remote; _write(list); return true; }
       return false;
     },
-    forDay(dateKey) { return this.all().filter(e => dayKey(new Date(e.ts)) === dateKey); },
+    babyEvents() { return this.all().filter(e => !isAppt(e.type)); },
+    appointments() { return this.all().filter(e => isAppt(e.type)); },
+    forDay(dateKey) { return this.babyEvents().filter(e => dayKey(new Date(e.ts)) === dateKey); },
   };
 })();
 
@@ -114,13 +171,11 @@ const SETTINGS = {
 };
 
 /* ===================== Lembrete de leite (3h) ===================== */
-const MILK_REMINDER_MS = 3 * 60 * 60 * 1000;   // 3 horas
-const remindersOn = () => SETTINGS.get().remindersEnabled !== false; // ligado por padrão
+const MILK_REMINDER_MS = 3 * 60 * 60 * 1000;
+const remindersOn = () => SETTINGS.get().remindersEnabled !== false;
 
-// Bebê está em SONO NOTURNO agora? (night_start em aberto, sem wake_morning depois)
-// Soneca (nap_*) não conta. Ignora um night_start "esquecido" (> 16h) para não travar.
 function isNightSleeping() {
-  const all = STORE.all();
+  const all = STORE.babyEvents();
   let lastNight = -Infinity, lastWake = -Infinity;
   for (const e of all) {
     const t = new Date(e.ts).getTime();
@@ -132,7 +187,7 @@ function isNightSleeping() {
 }
 
 function milkReminderState() {
-  const milks = STORE.all().filter(e => e.type === "milk");
+  const milks = STORE.babyEvents().filter(e => e.type === "milk");
   const last = milks.length ? milks[milks.length - 1] : null;
   if (!last) return { active: false, last: null };
   const elapsed = Date.now() - new Date(last.ts).getTime();
@@ -153,14 +208,11 @@ function refreshReminder() {
   }
 }
 
-// Dispara notificação do sistema uma única vez por ciclo (por último leite).
-// Usa o service worker (notificação "de verdade", persiste em segundo plano);
-// cai para Notification simples se não houver SW ativo.
 async function maybeNotify(st) {
   if (!("Notification" in window) || Notification.permission !== "granted") return;
   if (SETTINGS.get().lastNotifiedMilkTs === st.lastTs) return;
-  SETTINGS.set({ lastNotifiedMilkTs: st.lastTs });   // marca antes p/ evitar duplicidade
-  const title = "Hora do leite? 🍼";
+  SETTINGS.set({ lastNotifiedMilkTs: st.lastTs });
+  const title = "Hora do leite?";
   const opts = {
     body: `Faz ${fmtDuration(st.elapsed)} desde a última mamada.`,
     tag: "milk-reminder", icon: "icon.svg", badge: "icon.svg",
@@ -172,8 +224,8 @@ async function maybeNotify(st) {
       await reg.showNotification(title, opts);
       return;
     }
-  } catch { /* cai no fallback abaixo */ }
-  try { new Notification(title, opts); } catch { /* banner cobre o caso */ }
+  } catch { /* fallback */ }
+  try { new Notification(title, opts); } catch { /* banner cobre */ }
 }
 
 /* ------------------------------ Utilidades ------------------------------- */
@@ -193,15 +245,14 @@ function fmtDuration(ms) {
   if (m === 0) return `${h}h`;
   return `${h}h${String(m).padStart(2, "0")}`;
 }
-// datetime-local <-> Date (horário local)
+const escapeHtml = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function toLocalInput(d) {
   const p = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 /* -------------------- Pareamento de intervalos de sono ------------------- */
-/* Percorre a lista cronológica e casa início→fim, mesmo cruzando a meia-noite.
-   Cada intervalo é atribuído ao DIA em que o sono COMEÇOU.                   */
 function buildIntervals(events, startType, endType) {
   const intervals = [];
   let open = null;
@@ -222,7 +273,7 @@ function buildIntervals(events, startType, endType) {
 }
 
 function summaryForDay(dateKey) {
-  const all = STORE.all();
+  const all = STORE.babyEvents();
   const evts = all.filter(e => dayKey(new Date(e.ts)) === dateKey);
 
   const milkMl = evts.filter(e => e.type === "milk").reduce((s, e) => s + (Number(e.amountMl) || 0), 0);
@@ -241,7 +292,7 @@ function summaryForDay(dateKey) {
     nightMs, nightCount: nights.length,
     diapers: count("diaper_wet") + count("diaper_poop"),
     poops: count("diaper_poop"),
-    meals: count("milk") + count("snack") + count("lunch"),
+    meals: count("snack") + count("lunch") + count("dinner"),
     sick: count("sick") > 0,
     total: evts.length,
     events: evts,
@@ -252,16 +303,16 @@ function summaryForDay(dateKey) {
    UI
    ========================================================================= */
 const el = (sel) => document.querySelector(sel);
-let currentDay = null;    // {key, date} do log de dia aberto
-let currentRange = 7;     // dias exibidos em Tendências
+let currentDay = null;
+let currentRange = 7;
 
-/* Re-renderiza tudo que possa ter mudado após uma alteração de dados. */
 function afterMutation() {
   refreshToday();
   refreshReminder();
   renderCalendar();
   if (currentDay && !el("#day-modal").hidden) openDay(currentDay.key, currentDay.date, true);
   if (el("#view-trends").classList.contains("active")) renderTrends(currentRange);
+  if (el("#view-agenda").classList.contains("active")) renderAgenda();
 }
 
 /* -------- Botões de evento -------- */
@@ -269,22 +320,22 @@ function renderButtons() {
   const grid = el("#btn-grid");
   grid.innerHTML = "";
   for (const item of BUTTON_LAYOUT) {
-    const def = EVENT_TYPES[item.type];
+    const def = item.food ? item : EVENT_TYPES[item.type];
     const btn = document.createElement("button");
-    btn.className = `evt-btn cat-${def.cat}` + (item.wide ? " wide" : "");
-    btn.innerHTML = `<span class="evt-ico">${def.icon}</span><span>${def.label}</span>`;
-    btn.addEventListener("click", () => onLog(item.type));
+    btn.className = "evt-btn" + (item.wide ? " wide" : "");
+    btn.innerHTML = `<span class="evt-chip chip-${def.cat}">${svgIcon(def.ic)}</span><span class="evt-lbl">${def.label}</span>`;
+    btn.addEventListener("click", () => item.food ? openFoodModal() : onLog(item.type));
     grid.appendChild(btn);
   }
 }
 function onLog(type) {
   const def = EVENT_TYPES[type];
   if (def.needsAmount) {
-    openMilkModal((ml) => { STORE.add(type, { amountMl: ml }); toast(`${def.icon} ${def.label} · ${ml}ml`); afterMutation(); });
+    openMilkModal((ml) => { STORE.add(type, { amountMl: ml }); toast(`Leite · ${ml} ml`); afterMutation(); });
     return;
   }
   STORE.add(type);
-  toast(`${def.icon} ${def.label} registrado`);
+  toast(`${def.label} registrado`);
   afterMutation();
 }
 
@@ -292,9 +343,9 @@ function onLog(type) {
 function refreshToday() {
   const s = summaryForDay(dayKey(new Date()));
   el("#today-summary").innerHTML = `
-    <div class="stat"><div class="stat-ico">🍼</div><div class="stat-val">${s.milkMl}<small style="font-size:.6em"> ml</small></div><div class="stat-lbl">Leite · ${s.milkCount}x</div></div>
-    <div class="stat"><div class="stat-ico">😴</div><div class="stat-val">${fmtDuration(s.napMs)}</div><div class="stat-lbl">Sonecas · ${s.napCount}x</div></div>
-    <div class="stat"><div class="stat-ico">🌙</div><div class="stat-val">${fmtDuration(s.nightMs)}</div><div class="stat-lbl">Sono noite</div></div>
+    <div class="stat"><span class="stat-ico chip-food">${svgIcon("bottle")}</span><div class="stat-val">${s.milkMl}<small> ml</small></div><div class="stat-lbl">Leite · ${s.milkCount}x</div></div>
+    <div class="stat"><span class="stat-ico chip-nap">${svgIcon("moon")}</span><div class="stat-val">${fmtDuration(s.napMs)}</div><div class="stat-lbl">Sonecas · ${s.napCount}x</div></div>
+    <div class="stat"><span class="stat-ico chip-night">${svgIcon("moonstars")}</span><div class="stat-val">${fmtDuration(s.nightMs)}</div><div class="stat-lbl">Sono noite</div></div>
   `;
   el("#header-sub").textContent = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
 }
@@ -313,15 +364,41 @@ function initMilkModal() {
   modal.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
 }
 
+/* =========================== Modal de comida ============================= */
+let foodType = "lunch";
+function openFoodModal() {
+  foodType = "lunch";
+  el("#food-note").value = "";
+  updateFoodSeg();
+  el("#food-modal").hidden = false;
+}
+function updateFoodSeg() {
+  document.querySelectorAll("#food-seg button").forEach(b => b.classList.toggle("active", b.dataset.type === foodType));
+}
+function initFoodModal() {
+  const modal = el("#food-modal");
+  el("#food-seg").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { foodType = b.dataset.type; updateFoodSeg(); }));
+  el("#food-cancel").addEventListener("click", () => modal.hidden = true);
+  modal.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
+  el("#food-save").addEventListener("click", () => {
+    const note = el("#food-note").value.trim();
+    STORE.add(foodType, note ? { note } : {});
+    modal.hidden = true;
+    toast(`${KIND_META[foodType].label} registrado`);
+    afterMutation();
+  });
+}
+
 /* ==================== Modal de edição/criação de evento ================== */
 let editingId = null, edKind = "milk", edPoop = true;
 
 function openEventEditor(opts = {}) {
   editingId = opts.id || null;
   const type = opts.type || "milk";
-  edPoop = (type === "diaper_wet") ? false : true;   // padrão "com cocô"
+  edPoop = (type === "diaper_wet") ? false : true;
   el("#event-time").value = toLocalInput(opts.ts || new Date());
   el("#event-milk").value = opts.amountMl != null ? opts.amountMl : 120;
+  el("#event-note").value = opts.note != null ? opts.note : "";
   el("#event-modal-title").textContent = editingId ? "Editar registro" : "Novo registro";
   el("#event-delete").hidden = !editingId;
   selectKind(kindOf(type));
@@ -333,6 +410,7 @@ function selectKind(kind) {
   edKind = kind;
   document.querySelectorAll("#kind-grid .kind-chip").forEach(c => c.classList.toggle("active", c.dataset.kind === kind));
   el("#event-milk-field").hidden = kind !== "milk";
+  el("#event-note-field").hidden = !isFoodSolid(kind);
   el("#event-diaper-field").hidden = kind !== "diaper";
   updateDiaperSeg();
 }
@@ -344,7 +422,7 @@ function initEventEditor() {
   const grid = el("#kind-grid");
   grid.innerHTML = EDITOR_KINDS.map(k => {
     const m = KIND_META[k];
-    return `<button type="button" class="kind-chip" data-kind="${k}"><span class="kc-ico">${m.icon}</span><span class="kc-lbl">${m.label}</span></button>`;
+    return `<button type="button" class="kind-chip" data-kind="${k}"><span class="kc-ico">${svgIcon(m.ic)}</span><span class="kc-lbl">${m.label}</span></button>`;
   }).join("");
   grid.querySelectorAll(".kind-chip").forEach(c => c.addEventListener("click", () => selectKind(c.dataset.kind)));
 
@@ -363,9 +441,10 @@ function initEventEditor() {
     const type = resolveType(edKind, edPoop);
     const evt = { id: editingId || newId(), type, ts: ts.toISOString() };
     if (edKind === "milk") evt.amountMl = Math.max(0, Number(el("#event-milk").value) || 0);
+    if (isFoodSolid(edKind)) { const n = el("#event-note").value.trim(); if (n) evt.note = n; }
     STORE.put(evt);
     close();
-    toast("Registro salvo ✅");
+    toast("Registro salvo");
     afterMutation();
   });
 
@@ -377,7 +456,6 @@ function initEventEditor() {
     }
   });
 
-  // Adicionar registro anterior a partir da tela principal
   el("#quick-add").addEventListener("click", () => openEventEditor({ ts: new Date(), type: "milk" }));
 }
 
@@ -432,7 +510,7 @@ function renderCalendar() {
 function openDay(key, date, keepScroll = false) {
   currentDay = { key, date };
   const tl = el("#day-timeline");
-  const prevScroll = keepScroll ? el(".modal-day").scrollTop : 0;
+  const prevScroll = keepScroll ? el("#day-modal .modal-day").scrollTop : 0;
 
   const s = summaryForDay(key);
   el("#day-title").textContent = date.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
@@ -447,35 +525,126 @@ function openDay(key, date, keepScroll = false) {
     tl.innerHTML = `<div class="day-empty">Nenhum registro neste dia.</div>`;
   } else {
     tl.innerHTML = s.events.map(e => {
-      const def = EVENT_TYPES[e.type] || { label: e.type, icon: "•", color: "var(--muted)" };
-      const extra = e.type === "milk" && e.amountMl != null ? `<small>${e.amountMl} ml</small>` : "";
+      const def = EVENT_TYPES[e.type] || { label: e.type, ic: "dot", cat: "" };
+      let extra = "";
+      if (e.type === "milk" && e.amountMl != null) extra = `<small>${e.amountMl} ml</small>`;
+      else if (isFoodSolid(e.type) && e.note) extra = `<small>${escapeHtml(e.note)}</small>`;
       return `
         <button class="tl-item" data-id="${e.id}">
           <span class="tl-time">${fmtTime(new Date(e.ts))}</span>
-          <span class="tl-ico" style="background:${def.color}22;">${def.icon}</span>
+          <span class="tl-ico chip-${def.cat}">${svgIcon(def.ic)}</span>
           <span class="tl-label">${def.label}${extra}</span>
-          <span class="tl-edit">✎</span>
+          <span class="tl-edit">${svgIcon("chevR")}</span>
         </button>`;
     }).join("");
     tl.querySelectorAll(".tl-item").forEach(row => row.addEventListener("click", () => {
       const e = STORE.all().find(x => x.id === row.dataset.id);
-      if (e) openEventEditor({ id: e.id, type: e.type, ts: new Date(e.ts), amountMl: e.amountMl });
+      if (e) openEventEditor({ id: e.id, type: e.type, ts: new Date(e.ts), amountMl: e.amountMl, note: e.note });
     }));
   }
 
   el("#day-modal").hidden = false;
-  if (keepScroll) el(".modal-day").scrollTop = prevScroll;
+  if (keepScroll) el("#day-modal .modal-day").scrollTop = prevScroll;
 }
 function initDayModal() {
   const modal = el("#day-modal");
   el("#day-close").addEventListener("click", () => modal.hidden = true);
   modal.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
   el("#day-add").addEventListener("click", () => {
-    // novo evento neste dia, na hora atual
     const base = new Date(currentDay.date);
     const now = new Date();
     base.setHours(now.getHours(), now.getMinutes(), 0, 0);
     openEventEditor({ ts: base, type: "milk" });
+  });
+}
+
+/* ============================== Agenda ================================== */
+let apptEditingId = null, apptType = "appt_medical";
+
+function renderAgenda() {
+  const list = el("#agenda-list");
+  const all = STORE.appointments();
+  if (!all.length) {
+    list.innerHTML = `<div class="day-empty">Nenhum compromisso ainda.<br>Toque em “Novo compromisso” para adicionar consultas, aulas e outros.</div>`;
+    return;
+  }
+  const startToday = new Date(); startToday.setHours(0, 0, 0, 0);
+  const st = startToday.getTime();
+  const upcoming = all.filter(e => new Date(e.ts).getTime() >= st);
+  const past = all.filter(e => new Date(e.ts).getTime() < st).reverse();
+
+  const card = (e, isPast) => {
+    const def = EVENT_TYPES[e.type] || { ic: "bookmark", label: "Compromisso" };
+    const d = new Date(e.ts);
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mon = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+    const when = d.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" }) + " · " + fmtTime(d);
+    const meta = e.note ? `${when} · ${escapeHtml(e.note)}` : when;
+    return `
+      <button class="appt-card${isPast ? " past" : ""}" data-id="${e.id}">
+        <span class="appt-date"><span class="ad-day">${dd}</span><span class="ad-mon">${mon}</span></span>
+        <span class="appt-body"><b>${escapeHtml(e.title || def.label)}</b><span class="appt-meta">${meta}</span></span>
+        <span class="appt-ico chip-appt">${svgIcon(def.ic)}</span>
+      </button>`;
+  };
+
+  let html = "";
+  if (upcoming.length) html += `<div class="agenda-group-title">Próximos</div>` + upcoming.map(e => card(e, false)).join("");
+  if (past.length) html += `<div class="agenda-group-title">Anteriores</div>` + past.map(e => card(e, true)).join("");
+  list.innerHTML = html;
+
+  list.querySelectorAll(".appt-card").forEach(row => row.addEventListener("click", () => {
+    const e = STORE.all().find(x => x.id === row.dataset.id);
+    if (e) openApptEditor({ id: e.id, type: e.type, ts: new Date(e.ts), title: e.title, note: e.note });
+  }));
+}
+
+function openApptEditor(opts = {}) {
+  apptEditingId = opts.id || null;
+  apptType = opts.type || "appt_medical";
+  el("#appt-title").value = opts.title || "";
+  el("#appt-note").value = opts.note || "";
+  el("#appt-time").value = toLocalInput(opts.ts || nextHour());
+  el("#appt-modal-title").textContent = apptEditingId ? "Editar compromisso" : "Novo compromisso";
+  el("#appt-delete").hidden = !apptEditingId;
+  updateApptSeg();
+  el("#appt-modal").hidden = false;
+  el("#appt-modal .modal").scrollTop = 0;
+}
+function nextHour() { const d = new Date(); d.setHours(d.getHours() + 1, 0, 0, 0); return d; }
+function updateApptSeg() {
+  document.querySelectorAll("#appt-seg button").forEach(b => b.classList.toggle("active", b.dataset.type === apptType));
+}
+function initAgenda() {
+  el("#agenda-add").addEventListener("click", () => openApptEditor());
+
+  const modal = el("#appt-modal");
+  const close = () => modal.hidden = true;
+  el("#appt-seg").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { apptType = b.dataset.type; updateApptSeg(); }));
+  el("#appt-close").addEventListener("click", close);
+  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+
+  el("#appt-save").addEventListener("click", () => {
+    const raw = el("#appt-time").value;
+    const ts = new Date(raw);
+    if (!raw || isNaN(ts)) { alert("Informe uma data e hora válidas."); return; }
+    const title = el("#appt-title").value.trim();
+    if (!title) { alert("Dê um título ao compromisso."); return; }
+    const note = el("#appt-note").value.trim();
+    const evt = { id: apptEditingId || newId(), type: apptType, ts: ts.toISOString(), title };
+    if (note) evt.note = note;
+    STORE.put(evt);
+    close();
+    toast("Compromisso salvo");
+    afterMutation();
+  });
+
+  el("#appt-delete").addEventListener("click", () => {
+    if (apptEditingId && confirm("Excluir este compromisso?")) {
+      STORE.remove(apptEditingId);
+      close();
+      afterMutation();
+    }
   });
 }
 
@@ -486,7 +655,11 @@ function seriesForRange(days) {
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
     const s = summaryForDay(dayKey(d));
-    out.push({ date: d, milkMl: s.milkMl, milkCount: s.milkCount, napMs: s.napMs, napCount: s.napCount, nightMs: s.nightMs });
+    out.push({
+      date: d, milkMl: s.milkMl, milkCount: s.milkCount,
+      napMs: s.napMs, napCount: s.napCount, nightMs: s.nightMs,
+      diapers: s.diapers, poops: s.poops,
+    });
   }
   return out;
 }
@@ -510,12 +683,11 @@ function barChartSVG(series, valueFn, color, avg) {
     const cx = padX + i * colW + colW / 2;
     const bw = Math.min(colW * 0.62, 26);
     const by = padTop + (chartH - bh);
-    if (v > 0) bars += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="2" fill="${color}"/>`;
+    if (v > 0) bars += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="3" fill="${color}"/>`;
     if (showVals && v > 0) bars += `<text class="bar-val" x="${cx.toFixed(1)}" y="${(by - 3).toFixed(1)}">${fmtBarVal(v)}</text>`;
     if (i % showEvery === 0) labels += `<text class="bar-lbl" x="${cx.toFixed(1)}" y="${H - 6}">${d.date.getDate()}</text>`;
   });
 
-  // Linha de média (recebida pronta — calculada só sobre os dias com registro).
   const avgY = padTop + (chartH - (avg / niceMax) * chartH);
   const avgLine = avg > 0
     ? `<line x1="${padX}" y1="${avgY.toFixed(1)}" x2="${W - padX}" y2="${avgY.toFixed(1)}" class="avg-line"/>`
@@ -528,25 +700,26 @@ function fmtBarVal(v) { return v >= 10 ? String(Math.round(v)) : (Number.isInteg
 function renderTrends(days) {
   currentRange = days;
   const series = seriesForRange(days);
-  const hasData = series.some(d => d.milkMl || d.milkCount || d.napMs || d.napCount || d.nightMs);
+  const hasData = series.some(d => d.milkMl || d.milkCount || d.napMs || d.napCount || d.nightMs || d.diapers || d.poops);
 
-  // Média considerando SÓ os dias que têm registro daquele indicador (val > 0).
   const activeAvg = (valFn) => {
     const active = series.map(valFn).filter(v => v > 0);
     return active.length ? active.reduce((a, b) => a + b, 0) / active.length : 0;
   };
 
   const cards = [
-    { title: "Leite por dia",          color: "var(--c-food)",  val: d => d.milkMl,           fmtAvg: v => `média ${Math.round(v)} ml/dia` },
-    { title: "Mamadas por dia",        color: "#3aa76d",        val: d => d.milkCount,        fmtAvg: v => `média ${v.toFixed(1)}×/dia` },
-    { title: "Sonecas — tempo",        color: "var(--c-nap)",   val: d => d.napMs / 3600000,  fmtAvg: v => `média ${fmtDuration(v * 3600000)}/dia` },
-    { title: "Sonecas — quantidade",   color: "#9a6cff",        val: d => d.napCount,         fmtAvg: v => `média ${v.toFixed(1)}×/dia` },
-    { title: "Sono noturno — tempo",   color: "var(--c-night)", val: d => d.nightMs / 3600000, fmtAvg: v => `média ${fmtDuration(v * 3600000)}/dia` },
+    { title: "Leite por dia",            color: "var(--c-food)",   val: d => d.milkMl,            fmtAvg: v => `média ${Math.round(v)} ml/dia` },
+    { title: "Mamadas por dia",          color: "var(--c-food)",   val: d => d.milkCount,         fmtAvg: v => `média ${v.toFixed(1)}×/dia` },
+    { title: "Sonecas — tempo",          color: "var(--c-nap)",    val: d => d.napMs / 3600000,   fmtAvg: v => `média ${fmtDuration(v * 3600000)}/dia` },
+    { title: "Sonecas — quantidade",     color: "var(--c-nap)",    val: d => d.napCount,          fmtAvg: v => `média ${v.toFixed(1)}×/dia` },
+    { title: "Sono noturno — tempo",     color: "var(--c-night)",  val: d => d.nightMs / 3600000, fmtAvg: v => `média ${fmtDuration(v * 3600000)}/dia` },
+    { title: "Trocas de fralda por dia", color: "var(--c-diaper)", val: d => d.diapers,           fmtAvg: v => `média ${v.toFixed(1)}×/dia` },
+    { title: "Cocô por dia",             color: "var(--c-diaper)", val: d => d.poops,             fmtAvg: v => `média ${v.toFixed(1)}×/dia` },
   ];
 
   const wrap = el("#charts");
   if (!hasData) {
-    wrap.innerHTML = `<div class="day-empty">Sem dados neste período.<br>Registre eventos para ver as tendências. 📈</div>`;
+    wrap.innerHTML = `<div class="day-empty">Sem dados neste período.<br>Registre eventos para ver as tendências.</div>`;
     return;
   }
   wrap.innerHTML = cards.map(c => {
@@ -570,12 +743,12 @@ function initTrends() {
 
 /* ============================== Menu / Backup =========================== */
 function updateMenuLabels() {
-  el("#menu-reminders").textContent = `🔔 Lembretes de leite: ${remindersOn() ? "Ativados" : "Desativados"}`;
+  el("#menu-reminders .mi-tx").textContent = `Lembretes de leite: ${remindersOn() ? "Ativados" : "Desativados"}`;
   let txt = "Permitir notificações";
   if (!("Notification" in window)) txt = "Notificações indisponíveis";
-  else if (Notification.permission === "granted") txt = "Notificações permitidas ✓";
-  else if (Notification.permission === "denied") txt = "Notificações bloqueadas (ajuste no navegador)";
-  el("#menu-notify").textContent = `📲 ${txt}`;
+  else if (Notification.permission === "granted") txt = "Notificações permitidas";
+  else if (Notification.permission === "denied") txt = "Notificações bloqueadas";
+  el("#menu-notify .mi-tx").textContent = txt;
 }
 function initMenu() {
   const modal = el("#menu-modal");
@@ -587,11 +760,11 @@ function initMenu() {
     SETTINGS.set({ remindersEnabled: !remindersOn() });
     updateMenuLabels();
     refreshReminder();
-    toast(remindersOn() ? "Lembretes ativados 🔔" : "Lembretes desativados");
+    toast(remindersOn() ? "Lembretes ativados" : "Lembretes desativados");
   });
   el("#menu-notify").addEventListener("click", () => {
     if (!("Notification" in window)) { alert("Este navegador não suporta notificações."); return; }
-    if (Notification.permission === "granted") { toast("Notificações já estão permitidas ✓"); return; }
+    if (Notification.permission === "granted") { toast("Notificações já estão permitidas"); return; }
     if (Notification.permission === "denied") { alert("As notificações estão bloqueadas. Reative nas configurações do navegador para este site."); return; }
     Notification.requestPermission().then(() => { updateMenuLabels(); refreshReminder(); });
   });
@@ -604,7 +777,7 @@ function initMenu() {
     a.href = url; a.download = `diario-bebe-${dayKey(new Date())}.json`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast("Backup exportado ✅");
+    toast("Backup exportado");
   });
   el("#menu-import").addEventListener("click", () => el("#import-file").click());
   el("#import-file").addEventListener("change", (e) => {
@@ -619,7 +792,7 @@ function initMenu() {
           STORE.replaceAll(list);
           modal.hidden = true;
           afterMutation();
-          toast("Backup importado ✅");
+          toast("Backup importado");
         }
       } catch (err) { alert("Arquivo inválido: " + err.message); }
       e.target.value = "";
@@ -636,9 +809,11 @@ function initNav() {
     const view = btn.dataset.view;
     el("#view-register").classList.toggle("active", view === "register");
     el("#view-calendar").classList.toggle("active", view === "calendar");
+    el("#view-agenda").classList.toggle("active", view === "agenda");
     el("#view-trends").classList.toggle("active", view === "trends");
     if (view === "calendar") renderCalendar();
     if (view === "register") refreshToday();
+    if (view === "agenda") renderAgenda();
     if (view === "trends") renderTrends(currentRange);
   }));
 }
@@ -655,21 +830,19 @@ function toast(msg) {
 }
 
 /* ===================== Sincronização na nuvem (Firebase) ================= */
-/* Aditivo e à prova de falha: sem config (firebase-config.js) o app segue
-   100% local. Com config + login, sincroniza em tempo real entre aparelhos. */
 const Cloud = {
   enabled: false, db: null, auth: null, uid: null, unsub: null,
 
   init() {
     const cfg = window.FIREBASE_CONFIG;
-    if (typeof firebase === "undefined" || !cfg || !cfg.apiKey) return; // sem config → local
+    if (typeof firebase === "undefined" || !cfg || !cfg.apiKey) return;
     try {
       firebase.initializeApp(cfg);
       this.auth = firebase.auth();
       this.db = firebase.firestore();
-      this.db.enablePersistence({ synchronizeTabs: true }).catch(() => {}); // offline
+      this.db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
       this.enabled = true;
-      onEventWrite = (evt) => this.pushEvent(evt);         // liga o gancho do STORE
+      onEventWrite = (evt) => this.pushEvent(evt);
       this.auth.onAuthStateChanged((user) => {
         this.uid = user ? user.uid : null;
         if (user) this.start(); else this.stop();
@@ -688,7 +861,7 @@ const Cloud = {
     if (!this.enabled || !this.uid || !evt || !evt.id) return;
     const clean = {};
     Object.keys(evt).forEach(k => { if (evt[k] !== undefined) clean[k] = evt[k]; });
-    this.col().doc(evt.id).set(clean).catch(() => {}); // offline: Firestore enfileira
+    this.col().doc(evt.id).set(clean).catch(() => {});
   },
 
   start() {
@@ -697,7 +870,7 @@ const Cloud = {
     this.unsub = this.col().onSnapshot((snap) => {
       let changed = false;
       snap.docChanges().forEach((ch) => { if (STORE.mergeRemote(ch.doc.data())) changed = true; });
-      if (!initial) {                                     // reconciliação inicial dos dois lados
+      if (!initial) {
         initial = true;
         const remote = new Map(snap.docs.map((d) => [d.id, d.data()]));
         STORE._raw().forEach((ev) => {
@@ -718,9 +891,8 @@ function updateSyncUI() {
   el("#sync-signed-out").hidden = !configured || !!user;
   el("#sync-signed-in").hidden = !configured || !user;
   if (user) el("#sync-account").textContent = `Sincronizando como ${user.email}`;
-  // status curto no botão do menu
-  const btn = el("#menu-sync");
-  if (btn) btn.textContent = `☁️ Sincronização: ${!configured ? "não configurada" : (user ? "ativa" : "entrar")}`;
+  const tx = el("#menu-sync .mi-tx");
+  if (tx) tx.textContent = `Sincronização: ${!configured ? "não configurada" : (user ? "ativa" : "entrar")}`;
 }
 
 function initSync() {
@@ -735,13 +907,13 @@ function initSync() {
   el("#sync-signin").addEventListener("click", () => {
     const { email, pass } = creds();
     if (!email || !pass) return;
-    Cloud.signIn(email, pass).then(() => { toast("Conectado ☁️"); el("#sync-pass").value = ""; }).catch(fail);
+    Cloud.signIn(email, pass).then(() => { toast("Conectado"); el("#sync-pass").value = ""; }).catch(fail);
   });
   el("#sync-signup").addEventListener("click", () => {
     const { email, pass } = creds();
     if (!email || !pass) return;
     if (pass.length < 6) { alert("A senha precisa ter ao menos 6 caracteres."); return; }
-    Cloud.signUp(email, pass).then(() => { toast("Conta criada ☁️"); el("#sync-pass").value = ""; }).catch(fail);
+    Cloud.signUp(email, pass).then(() => { toast("Conta criada"); el("#sync-pass").value = ""; }).catch(fail);
   });
   el("#sync-signout").addEventListener("click", () => {
     if (confirm("Sair da sincronização? Os dados continuam salvos neste aparelho.")) Cloud.signOut();
@@ -750,28 +922,28 @@ function initSync() {
 
 /* ============================== Bootstrap =============================== */
 function init() {
+  hydrateIcons();
   renderButtons();
   refreshToday();
   initMilkModal();
+  initFoodModal();
   initEventEditor();
   initDayModal();
+  initAgenda();
   initTrends();
   initMenu();
   initSync();
   initCalendar();
   initNav();
 
-  // Lembrete de leite: banner + notificação; recheca a cada minuto e ao reabrir.
   el("#rb-log").addEventListener("click", () => onLog("milk"));
   refreshReminder();
   setInterval(refreshReminder, 60000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshReminder(); });
 
-  // Sincronização na nuvem (se configurada).
   Cloud.init();
   updateSyncUI();
 
-  // Service worker só faz sentido servido via http(s); ignorado ao abrir como arquivo.
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }

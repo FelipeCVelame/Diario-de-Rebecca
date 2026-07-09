@@ -1,6 +1,6 @@
 /* Service worker — offline (app shell) + notificações.
    Pronto para Web Push (evento 'push') na fase de notificação em segundo plano. */
-const CACHE = "baby-diary-v2";
+const CACHE = "baby-diary-v3";
 const ASSETS = [
   "./",
   "./index.html",

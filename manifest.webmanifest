@@ -1,13 +1,13 @@
 {
-  "name": "Diário do Bebê",
-  "short_name": "Bebê",
-  "description": "Acompanhamento da rotina do bebê: sono, leite, fraldas e mais.",
+  "name": "Diário da Rebecca",
+  "short_name": "Rebecca",
+  "description": "Acompanhamento da rotina da bebê: sono, leite, fraldas, refeições e compromissos.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f4f3fb",
-  "theme_color": "#7c6cf0",
+  "background_color": "#0b0a12",
+  "theme_color": "#0b0a12",
   "lang": "pt-BR",
   "icons": [
     {
