@@ -1,287 +1,367 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#08080d" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Diário da Rebecca</title>
-  <!-- BUILD:HEAD-LINKS -->
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="icon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="icon.svg" />
-  <!-- /BUILD:HEAD-LINKS -->
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <div class="bg-decor" aria-hidden="true"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#08080d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Diário da Rebecca</title>
+    <!-- BUILD:HEAD-LINKS -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <!-- /BUILD:HEAD-LINKS -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-decor" aria-hidden="true"></div>
 
-  <header class="app-header">
-    <div class="app-header-txt">
-      <h1>Diário da Rebecca</h1>
-      <p id="header-sub" class="header-sub"></p>
-    </div>
-    <button class="header-menu" id="menu-btn" data-icon="dots" aria-label="Menu"></button>
-  </header>
+    <header class="app-header">
+      <div class="app-header-txt">
+        <h1>Diário da Rebecca</h1>
+        <p id="header-sub" class="header-sub"></p>
+      </div>
+      <button class="header-menu" id="menu-btn" data-icon="dots" aria-label="Menu"></button>
+    </header>
 
-  <main id="app">
-    <!-- ===================== VIEW: REGISTRAR ===================== -->
-    <section id="view-register" class="view active">
-      <div id="reminder-banner" class="reminder-banner" hidden>
-        <span class="rb-ico" data-icon="bottle"></span>
-        <div class="rb-body">
-          <b>Hora do leite?</b>
-          <span class="rb-text"></span>
+    <main id="app">
+      <!-- ===================== VIEW: REGISTRAR ===================== -->
+      <section id="view-register" class="view active">
+        <div id="reminder-banner" class="reminder-banner" hidden>
+          <span class="rb-ico" data-icon="bottle"></span>
+          <div class="rb-body">
+            <b>Hora do leite?</b>
+            <span class="rb-text"></span>
+          </div>
+          <button class="rb-action" id="rb-log">Registrar</button>
         </div>
-        <button class="rb-action" id="rb-log">Registrar</button>
-      </div>
-      <div class="today-summary" id="today-summary"></div>
-      <button class="btn-add" id="quick-add"><span data-icon="clock"></span><span>Adicionar registro anterior</span></button>
-      <div class="btn-grid" id="btn-grid"></div>
-    </section>
+        <div class="today-summary" id="today-summary"></div>
+        <button class="btn-add" id="quick-add">
+          <span data-icon="clock"></span><span>Adicionar registro anterior</span>
+        </button>
+        <div class="btn-grid" id="btn-grid"></div>
+      </section>
 
-    <!-- ===================== VIEW: CALENDÁRIO ===================== -->
-    <section id="view-calendar" class="view">
-      <div class="cal-header">
-        <button class="cal-nav" id="cal-prev" data-icon="chevL" aria-label="Mês anterior"></button>
-        <h2 id="cal-title">—</h2>
-        <button class="cal-nav" id="cal-next" data-icon="chevR" aria-label="Próximo mês"></button>
-      </div>
-      <div class="cal-weekdays">
-        <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
-      </div>
-      <div class="cal-grid" id="cal-grid"></div>
-    </section>
-
-    <!-- ===================== VIEW: AGENDA ===================== -->
-    <section id="view-agenda" class="view">
-      <button class="btn-add" id="agenda-add"><span data-icon="plus"></span><span>Novo compromisso</span></button>
-      <div id="agenda-list" class="agenda-list"></div>
-    </section>
-
-    <!-- ===================== VIEW: TENDÊNCIAS ===================== -->
-    <section id="view-trends" class="view">
-      <div class="range-toggle" id="range-toggle">
-        <button data-days="7" class="active">7 dias</button>
-        <button data-days="14">14 dias</button>
-        <button data-days="30">30 dias</button>
-      </div>
-      <div id="charts"></div>
-    </section>
-  </main>
-
-  <!-- ===================== NAV INFERIOR ===================== -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" data-view="register"><span class="nav-ico" data-icon="plus"></span><span>Registrar</span></button>
-    <button class="nav-btn" data-view="calendar"><span class="nav-ico" data-icon="calendar"></span><span>Calendário</span></button>
-    <button class="nav-btn" data-view="agenda"><span class="nav-ico" data-icon="calcheck"></span><span>Agenda</span></button>
-    <button class="nav-btn" data-view="trends"><span class="nav-ico" data-icon="chart"></span><span>Tendências</span></button>
-  </nav>
-
-  <!-- ===================== MODAL: QUANTIDADE DE LEITE ===================== -->
-  <div class="modal-backdrop" id="milk-modal" hidden>
-    <div class="modal">
-      <h3><span class="h3-ic" data-icon="bottle"></span>Quanto de leite?</h3>
-      <div class="milk-display"><span id="milk-amount">120</span> ml</div>
-      <div class="milk-stepper">
-        <button data-step="-10">−10</button>
-        <input type="number" id="milk-input" value="120" min="0" step="10" inputmode="numeric" />
-        <button data-step="10">+10</button>
-      </div>
-      <div class="milk-presets">
-        <button data-ml="30">30</button><button data-ml="60">60</button>
-        <button data-ml="90">90</button><button data-ml="120">120</button>
-        <button data-ml="150">150</button><button data-ml="180">180</button>
-        <button data-ml="210">210</button><button data-ml="240">240</button>
-      </div>
-      <div class="modal-actions">
-        <button class="btn-ghost" id="milk-cancel">Cancelar</button>
-        <button class="btn-primary" id="milk-save">Salvar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===================== MODAL: COMIDA ===================== -->
-  <div class="modal-backdrop" id="food-modal" hidden>
-    <div class="modal">
-      <h3><span class="h3-ic" data-icon="utensils"></span>O que a Rebecca comeu?</h3>
-      <div class="field">
-        <span>Refeição</span>
-        <div class="segmented segmented-3" id="food-seg">
-          <button type="button" data-type="snack"><span data-icon="cookie"></span>Lanche</button>
-          <button type="button" data-type="lunch"><span data-icon="utensils"></span>Almoço</button>
-          <button type="button" data-type="dinner"><span data-icon="bowl"></span>Jantar</button>
+      <!-- ===================== VIEW: CALENDÁRIO ===================== -->
+      <section id="view-calendar" class="view">
+        <div class="cal-header">
+          <button
+            class="cal-nav"
+            id="cal-prev"
+            data-icon="chevL"
+            aria-label="Mês anterior"
+          ></button>
+          <h2 id="cal-title">—</h2>
+          <button class="cal-nav" id="cal-next" data-icon="chevR" aria-label="Próximo mês"></button>
         </div>
-      </div>
-      <label class="field">
-        <span>Observação (opcional)</span>
-        <input type="text" id="food-note" placeholder="Ex.: banana amassada, papinha…" />
-      </label>
-      <div class="modal-actions">
-        <button class="btn-ghost" id="food-cancel">Cancelar</button>
-        <button class="btn-primary" id="food-save">Salvar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===================== MODAL: LOG DO DIA ===================== -->
-  <div class="modal-backdrop" id="day-modal" hidden>
-    <div class="modal modal-day">
-      <div class="modal-day-head">
-        <h3 id="day-title">—</h3>
-        <button class="modal-close" id="day-close" data-icon="close" aria-label="Fechar"></button>
-      </div>
-      <div id="day-summary" class="day-summary"></div>
-      <button class="btn-add" id="day-add"><span data-icon="plus"></span><span>Adicionar registro</span></button>
-      <div id="day-timeline" class="day-timeline"></div>
-    </div>
-  </div>
-
-  <!-- ===================== MODAL: EDITAR/CRIAR EVENTO ===================== -->
-  <div class="modal-backdrop" id="event-modal" hidden>
-    <div class="modal modal-day">
-      <div class="modal-day-head">
-        <h3 id="event-modal-title">Novo registro</h3>
-        <button class="modal-close" id="event-close" data-icon="close" aria-label="Fechar"></button>
-      </div>
-
-      <div class="field">
-        <span>Evento</span>
-        <div class="kind-grid" id="kind-grid"></div>
-      </div>
-
-      <label class="field">
-        <span>Data e hora</span>
-        <input type="datetime-local" id="event-time" />
-      </label>
-
-      <div class="field" id="event-milk-field" hidden>
-        <span>Quantidade de leite (ml)</span>
-        <input type="number" id="event-milk" min="0" step="10" inputmode="numeric" value="120" />
-        <div class="milk-presets" id="event-milk-presets">
-          <button type="button" data-ml="30">30</button><button type="button" data-ml="60">60</button>
-          <button type="button" data-ml="90">90</button><button type="button" data-ml="120">120</button>
-          <button type="button" data-ml="150">150</button><button type="button" data-ml="180">180</button>
-          <button type="button" data-ml="210">210</button><button type="button" data-ml="240">240</button>
+        <div class="cal-weekdays">
+          <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span
+          ><span>Sex</span><span>Sáb</span>
         </div>
-      </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </section>
 
-      <label class="field" id="event-note-field" hidden>
-        <span>Observação</span>
-        <input type="text" id="event-note" placeholder="Ex.: banana amassada, papinha…" />
-      </label>
+      <!-- ===================== VIEW: AGENDA ===================== -->
+      <section id="view-agenda" class="view">
+        <button class="btn-add" id="agenda-add">
+          <span data-icon="plus"></span><span>Novo compromisso</span>
+        </button>
+        <div id="agenda-list" class="agenda-list"></div>
+      </section>
 
-      <div class="field" id="event-diaper-field" hidden>
-        <span>Tipo de fralda</span>
-        <div class="segmented" id="diaper-seg">
-          <button type="button" data-poop="1"><span data-icon="poop"></span>Com cocô</button>
-          <button type="button" data-poop="0"><span data-icon="droplet"></span>Sem cocô</button>
+      <!-- ===================== VIEW: TENDÊNCIAS ===================== -->
+      <section id="view-trends" class="view">
+        <div class="range-toggle" id="range-toggle">
+          <button data-days="7" class="active">7 dias</button>
+          <button data-days="14">14 dias</button>
+          <button data-days="30">30 dias</button>
         </div>
-      </div>
+        <div id="charts"></div>
+      </section>
+    </main>
 
-      <div class="modal-actions">
-        <button class="btn-danger" id="event-delete" hidden>Excluir</button>
-        <button class="btn-primary" id="event-save">Salvar</button>
-      </div>
-    </div>
-  </div>
+    <!-- ===================== NAV INFERIOR ===================== -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-view="register">
+        <span class="nav-ico" data-icon="plus"></span><span>Registrar</span>
+      </button>
+      <button class="nav-btn" data-view="calendar">
+        <span class="nav-ico" data-icon="calendar"></span><span>Calendário</span>
+      </button>
+      <button class="nav-btn" data-view="agenda">
+        <span class="nav-ico" data-icon="calcheck"></span><span>Agenda</span>
+      </button>
+      <button class="nav-btn" data-view="trends">
+        <span class="nav-ico" data-icon="chart"></span><span>Tendências</span>
+      </button>
+    </nav>
 
-  <!-- ===================== MODAL: EDITAR/CRIAR COMPROMISSO ===================== -->
-  <div class="modal-backdrop" id="appt-modal" hidden>
-    <div class="modal modal-day">
-      <div class="modal-day-head">
-        <h3 id="appt-modal-title">Novo compromisso</h3>
-        <button class="modal-close" id="appt-close" data-icon="close" aria-label="Fechar"></button>
-      </div>
-
-      <div class="field">
-        <span>Tipo</span>
-        <div class="segmented segmented-3" id="appt-seg">
-          <button type="button" data-type="appt_medical"><span data-icon="pulse"></span>Consulta</button>
-          <button type="button" data-type="appt_class"><span data-icon="book"></span>Aula</button>
-          <button type="button" data-type="appt_other"><span data-icon="bookmark"></span>Outro</button>
+    <!-- ===================== MODAL: QUANTIDADE DE LEITE ===================== -->
+    <div class="modal-backdrop" id="milk-modal" hidden>
+      <div class="modal">
+        <h3><span class="h3-ic" data-icon="bottle"></span>Quanto de leite?</h3>
+        <div class="milk-display"><span id="milk-amount">120</span> ml</div>
+        <div class="milk-stepper">
+          <button data-step="-10">−10</button>
+          <input type="number" id="milk-input" value="120" min="0" step="10" inputmode="numeric" />
+          <button data-step="10">+10</button>
         </div>
-      </div>
-
-      <label class="field">
-        <span>Título</span>
-        <input type="text" id="appt-title" placeholder="Ex.: Pediatra Dra. Ana" />
-      </label>
-
-      <label class="field">
-        <span>Data e hora</span>
-        <input type="datetime-local" id="appt-time" />
-      </label>
-
-      <label class="field">
-        <span>Observação (opcional)</span>
-        <input type="text" id="appt-note" placeholder="Ex.: levar carteira de vacinação" />
-      </label>
-
-      <div class="modal-actions">
-        <button class="btn-danger" id="appt-delete" hidden>Excluir</button>
-        <button class="btn-primary" id="appt-save">Salvar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===================== MODAL: MENU / BACKUP ===================== -->
-  <div class="modal-backdrop" id="menu-modal" hidden>
-    <div class="modal">
-      <div class="modal-day-head">
-        <h3>Menu</h3>
-        <button class="modal-close" id="menu-close" data-icon="close" aria-label="Fechar"></button>
-      </div>
-      <div class="menu-list">
-        <button id="menu-sync"><span class="mi-ic" data-icon="cloud"></span><span class="mi-tx">Sincronização</span></button>
-        <button id="menu-reminders"><span class="mi-ic" data-icon="bell"></span><span class="mi-tx">Lembretes de leite</span></button>
-        <button id="menu-notify"><span class="mi-ic" data-icon="device"></span><span class="mi-tx">Permitir notificações</span></button>
-        <button id="menu-export"><span class="mi-ic" data-icon="download"></span><span class="mi-tx">Exportar backup (.json)</span></button>
-        <button id="menu-import"><span class="mi-ic" data-icon="upload"></span><span class="mi-tx">Importar backup (.json)</span></button>
-      </div>
-      <p class="menu-note">O lembrete avisa 3h após o último leite (pausado durante o sono noturno). As notificações do sistema só disparam com o app aberto — inclusive em segundo plano.</p>
-      <input type="file" id="import-file" accept="application/json,.json" hidden />
-    </div>
-  </div>
-
-  <!-- ===================== MODAL: SINCRONIZAÇÃO ===================== -->
-  <div class="modal-backdrop" id="sync-modal" hidden>
-    <div class="modal">
-      <div class="modal-day-head">
-        <h3>Sincronização na nuvem</h3>
-        <button class="modal-close" id="sync-close" data-icon="close" aria-label="Fechar"></button>
-      </div>
-
-      <div id="sync-unconfigured" hidden>
-        <p class="menu-note">A sincronização ainda não foi configurada. Siga o <b>FIREBASE-SETUP.md</b> para conectar sua conta gratuita do Firebase (grátis, ~3 min) e ativar a sincronização entre os aparelhos.</p>
-      </div>
-
-      <div id="sync-signed-out" hidden>
-        <p class="menu-note">Entre com a conta da família (o mesmo e-mail/senha nos dois celulares) para sincronizar os dados.</p>
-        <label class="field"><span>E-mail</span><input type="email" id="sync-email" autocomplete="username" inputmode="email" /></label>
-        <label class="field"><span>Senha</span><input type="password" id="sync-pass" autocomplete="current-password" /></label>
+        <div class="milk-presets">
+          <button data-ml="30">30</button><button data-ml="60">60</button>
+          <button data-ml="90">90</button><button data-ml="120">120</button>
+          <button data-ml="150">150</button><button data-ml="180">180</button>
+          <button data-ml="210">210</button><button data-ml="240">240</button>
+        </div>
         <div class="modal-actions">
-          <button class="btn-ghost" id="sync-signup">Criar conta</button>
-          <button class="btn-primary" id="sync-signin">Entrar</button>
+          <button class="btn-ghost" id="milk-cancel">Cancelar</button>
+          <button class="btn-primary" id="milk-save">Salvar</button>
         </div>
       </div>
+    </div>
 
-      <div id="sync-signed-in" hidden>
-        <p class="menu-note" id="sync-account">Sincronizando</p>
-        <button class="btn-ghost" id="sync-signout">Sair da sincronização</button>
+    <!-- ===================== MODAL: COMIDA ===================== -->
+    <div class="modal-backdrop" id="food-modal" hidden>
+      <div class="modal">
+        <h3><span class="h3-ic" data-icon="utensils"></span>O que a Rebecca comeu?</h3>
+        <div class="field">
+          <span>Refeição</span>
+          <div class="segmented segmented-3" id="food-seg">
+            <button type="button" data-type="snack"><span data-icon="cookie"></span>Lanche</button>
+            <button type="button" data-type="lunch">
+              <span data-icon="utensils"></span>Almoço
+            </button>
+            <button type="button" data-type="dinner"><span data-icon="bowl"></span>Jantar</button>
+          </div>
+        </div>
+        <label class="field">
+          <span>Observação (opcional)</span>
+          <input type="text" id="food-note" placeholder="Ex.: banana amassada, papinha…" />
+        </label>
+        <div class="modal-actions">
+          <button class="btn-ghost" id="food-cancel">Cancelar</button>
+          <button class="btn-primary" id="food-save">Salvar</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div id="toast" class="toast" hidden></div>
+    <!-- ===================== MODAL: LOG DO DIA ===================== -->
+    <div class="modal-backdrop" id="day-modal" hidden>
+      <div class="modal modal-day">
+        <div class="modal-day-head">
+          <h3 id="day-title">—</h3>
+          <button class="modal-close" id="day-close" data-icon="close" aria-label="Fechar"></button>
+        </div>
+        <div id="day-summary" class="day-summary"></div>
+        <button class="btn-add" id="day-add">
+          <span data-icon="plus"></span><span>Adicionar registro</span>
+        </button>
+        <div id="day-timeline" class="day-timeline"></div>
+      </div>
+    </div>
 
-  <!-- BUILD:FIREBASE -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <!-- /BUILD:FIREBASE -->
-  <script type="module" src="app.js"></script>
-</body>
+    <!-- ===================== MODAL: EDITAR/CRIAR EVENTO ===================== -->
+    <div class="modal-backdrop" id="event-modal" hidden>
+      <div class="modal modal-day">
+        <div class="modal-day-head">
+          <h3 id="event-modal-title">Novo registro</h3>
+          <button
+            class="modal-close"
+            id="event-close"
+            data-icon="close"
+            aria-label="Fechar"
+          ></button>
+        </div>
+
+        <div class="field">
+          <span>Evento</span>
+          <div class="kind-grid" id="kind-grid"></div>
+        </div>
+
+        <label class="field">
+          <span>Data e hora</span>
+          <input type="datetime-local" id="event-time" />
+        </label>
+
+        <div class="field" id="event-milk-field" hidden>
+          <span>Quantidade de leite (ml)</span>
+          <input type="number" id="event-milk" min="0" step="10" inputmode="numeric" value="120" />
+          <div class="milk-presets" id="event-milk-presets">
+            <button type="button" data-ml="30">30</button
+            ><button type="button" data-ml="60">60</button>
+            <button type="button" data-ml="90">90</button
+            ><button type="button" data-ml="120">120</button>
+            <button type="button" data-ml="150">150</button
+            ><button type="button" data-ml="180">180</button>
+            <button type="button" data-ml="210">210</button
+            ><button type="button" data-ml="240">240</button>
+          </div>
+        </div>
+
+        <label class="field" id="event-note-field" hidden>
+          <span>Observação</span>
+          <input type="text" id="event-note" placeholder="Ex.: banana amassada, papinha…" />
+        </label>
+
+        <div class="field" id="event-diaper-field" hidden>
+          <span>Tipo de fralda</span>
+          <div class="segmented" id="diaper-seg">
+            <button type="button" data-poop="1"><span data-icon="poop"></span>Com cocô</button>
+            <button type="button" data-poop="0"><span data-icon="droplet"></span>Sem cocô</button>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-danger" id="event-delete" hidden>Excluir</button>
+          <button class="btn-primary" id="event-save">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== MODAL: EDITAR/CRIAR COMPROMISSO ===================== -->
+    <div class="modal-backdrop" id="appt-modal" hidden>
+      <div class="modal modal-day">
+        <div class="modal-day-head">
+          <h3 id="appt-modal-title">Novo compromisso</h3>
+          <button
+            class="modal-close"
+            id="appt-close"
+            data-icon="close"
+            aria-label="Fechar"
+          ></button>
+        </div>
+
+        <div class="field">
+          <span>Tipo</span>
+          <div class="segmented segmented-3" id="appt-seg">
+            <button type="button" data-type="appt_medical">
+              <span data-icon="pulse"></span>Consulta
+            </button>
+            <button type="button" data-type="appt_class"><span data-icon="book"></span>Aula</button>
+            <button type="button" data-type="appt_other">
+              <span data-icon="bookmark"></span>Outro
+            </button>
+          </div>
+        </div>
+
+        <label class="field">
+          <span>Título</span>
+          <input type="text" id="appt-title" placeholder="Ex.: Pediatra Dra. Ana" />
+        </label>
+
+        <label class="field">
+          <span>Data e hora</span>
+          <input type="datetime-local" id="appt-time" />
+        </label>
+
+        <label class="field">
+          <span>Observação (opcional)</span>
+          <input type="text" id="appt-note" placeholder="Ex.: levar carteira de vacinação" />
+        </label>
+
+        <div class="modal-actions">
+          <button class="btn-danger" id="appt-delete" hidden>Excluir</button>
+          <button class="btn-primary" id="appt-save">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== MODAL: MENU / BACKUP ===================== -->
+    <div class="modal-backdrop" id="menu-modal" hidden>
+      <div class="modal">
+        <div class="modal-day-head">
+          <h3>Menu</h3>
+          <button
+            class="modal-close"
+            id="menu-close"
+            data-icon="close"
+            aria-label="Fechar"
+          ></button>
+        </div>
+        <div class="menu-list">
+          <button id="menu-sync">
+            <span class="mi-ic" data-icon="cloud"></span><span class="mi-tx">Sincronização</span>
+          </button>
+          <button id="menu-reminders">
+            <span class="mi-ic" data-icon="bell"></span
+            ><span class="mi-tx">Lembretes de leite</span>
+          </button>
+          <button id="menu-notify">
+            <span class="mi-ic" data-icon="device"></span
+            ><span class="mi-tx">Permitir notificações</span>
+          </button>
+          <button id="menu-export">
+            <span class="mi-ic" data-icon="download"></span
+            ><span class="mi-tx">Exportar backup (.json)</span>
+          </button>
+          <button id="menu-import">
+            <span class="mi-ic" data-icon="upload"></span
+            ><span class="mi-tx">Importar backup (.json)</span>
+          </button>
+        </div>
+        <p class="menu-note">
+          O lembrete avisa 3h após o último leite (pausado durante o sono noturno). As notificações
+          do sistema só disparam com o app aberto — inclusive em segundo plano.
+        </p>
+        <input type="file" id="import-file" accept="application/json,.json" hidden />
+      </div>
+    </div>
+
+    <!-- ===================== MODAL: SINCRONIZAÇÃO ===================== -->
+    <div class="modal-backdrop" id="sync-modal" hidden>
+      <div class="modal">
+        <div class="modal-day-head">
+          <h3>Sincronização na nuvem</h3>
+          <button
+            class="modal-close"
+            id="sync-close"
+            data-icon="close"
+            aria-label="Fechar"
+          ></button>
+        </div>
+
+        <div id="sync-unconfigured" hidden>
+          <p class="menu-note">
+            A sincronização ainda não foi configurada. Siga o <b>FIREBASE-SETUP.md</b> para conectar
+            sua conta gratuita do Firebase (grátis, ~3 min) e ativar a sincronização entre os
+            aparelhos.
+          </p>
+        </div>
+
+        <div id="sync-signed-out" hidden>
+          <p class="menu-note">
+            Entre com a conta da família (o mesmo e-mail/senha nos dois celulares) para sincronizar
+            os dados.
+          </p>
+          <label class="field"
+            ><span>E-mail</span
+            ><input type="email" id="sync-email" autocomplete="username" inputmode="email"
+          /></label>
+          <label class="field"
+            ><span>Senha</span
+            ><input type="password" id="sync-pass" autocomplete="current-password"
+          /></label>
+          <div class="modal-actions">
+            <button class="btn-ghost" id="sync-signup">Criar conta</button>
+            <button class="btn-primary" id="sync-signin">Entrar</button>
+          </div>
+        </div>
+
+        <div id="sync-signed-in" hidden>
+          <p class="menu-note" id="sync-account">Sincronizando</p>
+          <button class="btn-ghost" id="sync-signout">Sair da sincronização</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <!-- BUILD:FIREBASE -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <!-- /BUILD:FIREBASE -->
+    <script type="module" src="app.js"></script>
+  </body>
 </html>

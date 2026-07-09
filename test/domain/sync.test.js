@@ -10,21 +10,36 @@ describe("mergeRemote (last-write-wins + tombstone)", () => {
 
   it("remoto mais novo vence", () => {
     const local = [{ id: "a", type: "milk", amountMl: 100, updatedAt: 100 }];
-    const { list, changed } = mergeRemote(local, { id: "a", type: "milk", amountMl: 200, updatedAt: 200 });
+    const { list, changed } = mergeRemote(local, {
+      id: "a",
+      type: "milk",
+      amountMl: 200,
+      updatedAt: 200,
+    });
     expect(changed).toBe(true);
     expect(list[0].amountMl).toBe(200);
   });
 
   it("remoto mais velho é ignorado", () => {
     const local = [{ id: "a", type: "milk", amountMl: 100, updatedAt: 200 }];
-    const { list, changed } = mergeRemote(local, { id: "a", type: "milk", amountMl: 999, updatedAt: 100 });
+    const { list, changed } = mergeRemote(local, {
+      id: "a",
+      type: "milk",
+      amountMl: 999,
+      updatedAt: 100,
+    });
     expect(changed).toBe(false);
     expect(list[0].amountMl).toBe(100);
   });
 
   it("tombstone remoto mais novo propaga o apagamento", () => {
     const local = [{ id: "a", type: "milk", updatedAt: 100 }];
-    const { list, changed } = mergeRemote(local, { id: "a", type: "milk", deleted: true, updatedAt: 200 });
+    const { list, changed } = mergeRemote(local, {
+      id: "a",
+      type: "milk",
+      deleted: true,
+      updatedAt: 200,
+    });
     expect(changed).toBe(true);
     expect(list[0].deleted).toBe(true);
   });

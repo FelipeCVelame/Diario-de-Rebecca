@@ -44,7 +44,9 @@ export function summaryForDay(babyEvents, date) {
   const naps = buildIntervals(babyEvents, "nap_start", "nap_end").filter((i) => i.dayKey === date);
   const napMs = naps.reduce((s, i) => s + i.ms, 0);
 
-  const nights = buildIntervals(babyEvents, "night_start", "wake_morning").filter((i) => i.dayKey === date);
+  const nights = buildIntervals(babyEvents, "night_start", "wake_morning").filter(
+    (i) => i.dayKey === date
+  );
   const nightMs = nights.reduce((s, i) => s + i.ms, 0);
 
   return {

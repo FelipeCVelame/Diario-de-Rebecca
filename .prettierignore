@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+flutter_starter/
+agent-skills/
+web-quality-skills/
+bencium-claude-code-design-skill/
+claude-code-skills/
+planning-with-files/
+_backup_pre_git_sync/
+DiarioDoBebe.html
+
+# Docs em prosa — evitar Prettier reformatando/re-wrapping o texto (Markdown).
+*.md

@@ -4,7 +4,15 @@
     {
       "name": "baby-diary",
       "runtimeExecutable": "powershell.exe",
-      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "serve.ps1", "-Port", "4321"],
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "serve.ps1",
+        "-Port",
+        "4321"
+      ],
       "port": 4321
     }
   ]

@@ -61,9 +61,12 @@ describe("buildIntervals", () => {
   it("ordena defensivamente eventos fora de ordem", () => {
     const iso = (h, m) => new Date(2026, 6, 7, h, m).toISOString();
     const out = buildIntervals(
-      [{ type: "nap_end", ts: iso(10, 0) }, { type: "nap_start", ts: iso(9, 0) }],
+      [
+        { type: "nap_end", ts: iso(10, 0) },
+        { type: "nap_start", ts: iso(9, 0) },
+      ],
       "nap_start",
-      "nap_end",
+      "nap_end"
     );
     expect(out).toHaveLength(1);
     expect(out[0].ms).toBe(60 * 60 * 1000);

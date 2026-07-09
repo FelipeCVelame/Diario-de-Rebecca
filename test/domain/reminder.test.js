@@ -33,7 +33,7 @@ describe("milkReminderState", () => {
   it("cenário 5: sono noturno seguido de acordar → volta a ATIVAR", () => {
     const r = milkReminderState(
       [milkAgo(210), evAgo("night_start", 300), evAgo("wake_morning", 5)],
-      now,
+      now
     );
     expect(r.active).toBe(true);
   });
