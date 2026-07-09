@@ -93,18 +93,19 @@ const EDITOR_KINDS = ["wake_morning", "milk", "snack", "lunch", "dinner", "diape
 const kindOf = (type) => (type === "diaper_poop" || type === "diaper_wet") ? "diaper" : type;
 const resolveType = (kind, poop) => kind === "diaper" ? (poop ? "diaper_poop" : "diaper_wet") : kind;
 
-// Ordem/exibição dos botões. `wide` ocupa a linha inteira.
+// Ordem/exibição dos botões. Se o total for ímpar, o último tile fica sozinho
+// na linha e ocupa a largura inteira automaticamente (ver CSS `.btn-grid`).
 // O item `food` é sintético: abre o seletor de refeição (lanche/almoço/jantar).
 const BUTTON_LAYOUT = [
-  { type: "wake_morning", wide: true },
+  { type: "wake_morning" },
   { type: "milk" },
   { type: "food", food: true, label: "Comida", ic: "utensils", cat: "food" },
   { type: "diaper_wet" },
   { type: "diaper_poop" },
   { type: "nap_start" },
   { type: "nap_end" },
-  { type: "night_start", wide: true },
-  { type: "sick", wide: true },
+  { type: "night_start" },
+  { type: "sick" },
 ];
 
 /* =========================================================================
@@ -322,7 +323,7 @@ function renderButtons() {
   for (const item of BUTTON_LAYOUT) {
     const def = item.food ? item : EVENT_TYPES[item.type];
     const btn = document.createElement("button");
-    btn.className = "evt-btn" + (item.wide ? " wide" : "");
+    btn.className = "evt-btn";
     btn.innerHTML = `<span class="evt-chip chip-${def.cat}">${svgIcon(def.ic)}</span><span class="evt-lbl">${def.label}</span>`;
     btn.addEventListener("click", () => item.food ? openFoodModal() : onLog(item.type));
     grid.appendChild(btn);
