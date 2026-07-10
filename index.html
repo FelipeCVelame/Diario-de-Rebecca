@@ -267,6 +267,21 @@
           <input type="text" id="appt-note" placeholder="Ex.: levar carteira de vacinação" />
         </label>
 
+        <div class="field">
+          <span>Anexo — foto ou PDF (opcional)</span>
+          <div class="appt-attach-preview" id="appt-attach-preview" hidden>
+            <img class="appt-attach-thumb" id="appt-attach-thumb" alt="" hidden />
+            <span class="appt-attach-name" id="appt-attach-name"></span>
+            <a class="appt-attach-open" id="appt-attach-open" target="_blank" rel="noopener"
+              >Abrir</a
+            >
+            <button type="button" class="appt-attach-remove" id="appt-attach-remove">
+              Remover
+            </button>
+          </div>
+          <input type="file" id="appt-attach-input" accept="image/*,application/pdf" />
+        </div>
+
         <div class="modal-actions">
           <button class="btn-danger" id="appt-delete" hidden>Excluir</button>
           <button class="btn-primary" id="appt-save">Salvar</button>

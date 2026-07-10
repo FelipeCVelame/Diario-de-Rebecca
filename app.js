@@ -9,6 +9,7 @@ import { summaryForDay } from "./src/domain/summary.js";
 import { milkReminderState } from "./src/domain/reminder.js";
 import { seriesForRange, activeAvg } from "./src/domain/trends.js";
 import { mergeRemote as mergeRemoteFn } from "./src/domain/sync.js";
+import { validateAttachment } from "./src/domain/attachments.js";
 
 /* ------------------------------ Ícones (SVG) ----------------------------- */
 /* Conjunto de ícones "duotone" (forma sólida + camadas translúcidas na mesma
@@ -677,7 +678,27 @@ function initDayModal() {
 
 /* ============================== Agenda ================================== */
 let apptEditingId = null,
-  apptType = "appt_medical";
+  apptType = "appt_medical",
+  apptOriginalAttachment = null, // anexo como veio do evento ao abrir o editor (p/ apagar do Storage se substituído/removido)
+  apptAttachment = null; // anexo atual desejado ao salvar (null = nenhum)
+
+function renderApptAttachmentPreview() {
+  const box = el("#appt-attach-preview");
+  const thumb = el("#appt-attach-thumb");
+  const name = el("#appt-attach-name");
+  const open = el("#appt-attach-open");
+  if (!apptAttachment) {
+    box.hidden = true;
+    thumb.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  thumb.hidden = !apptAttachment.type.startsWith("image/");
+  if (!thumb.hidden) thumb.src = apptAttachment.url;
+  name.textContent = apptAttachment.name;
+  open.hidden = !apptAttachment.path;
+  if (apptAttachment.path) open.href = apptAttachment.url;
+}
 
 function renderAgenda() {
   const list = el("#agenda-list");
@@ -730,6 +751,7 @@ function renderAgenda() {
           ts: new Date(e.ts),
           title: e.title,
           note: e.note,
+          attachment: e.attachment,
         });
     })
   );
@@ -738,11 +760,15 @@ function renderAgenda() {
 function openApptEditor(opts = {}) {
   apptEditingId = opts.id || null;
   apptType = opts.type || "appt_medical";
+  apptOriginalAttachment = opts.attachment || null;
+  apptAttachment = opts.attachment || null;
   el("#appt-title").value = opts.title || "";
   el("#appt-note").value = opts.note || "";
   el("#appt-time").value = toLocalInput(opts.ts || nextHour());
   el("#appt-modal-title").textContent = apptEditingId ? "Editar compromisso" : "Novo compromisso";
   el("#appt-delete").hidden = !apptEditingId;
+  el("#appt-attach-input").value = "";
+  renderApptAttachmentPreview();
   updateApptSeg();
   el("#appt-modal").hidden = false;
   el("#appt-modal .modal").scrollTop = 0;
@@ -775,7 +801,36 @@ function initAgenda() {
     if (e.target === modal) close();
   });
 
-  el("#appt-save").addEventListener("click", () => {
+  el("#appt-attach-input").addEventListener("change", () => {
+    const file = el("#appt-attach-input").files[0];
+    if (!file) return;
+    const check = validateAttachment(file);
+    if (!check.valid) {
+      alert(
+        check.reason === "too-large"
+          ? "Arquivo muito grande (máximo 5MB)."
+          : "Tipo de arquivo não suportado (use foto ou PDF)."
+      );
+      el("#appt-attach-input").value = "";
+      return;
+    }
+    apptAttachment = {
+      path: null, // só é definido depois do upload, ao salvar
+      url: file.type.startsWith("image/") ? URL.createObjectURL(file) : "",
+      name: file.name,
+      type: file.type,
+      size: file.size,
+    };
+    renderApptAttachmentPreview();
+  });
+
+  el("#appt-attach-remove").addEventListener("click", () => {
+    apptAttachment = null;
+    el("#appt-attach-input").value = "";
+    renderApptAttachmentPreview();
+  });
+
+  el("#appt-save").addEventListener("click", async () => {
     const raw = el("#appt-time").value;
     const ts = new Date(raw);
     if (!raw || isNaN(ts)) {
@@ -788,12 +843,49 @@ function initAgenda() {
       return;
     }
     const note = el("#appt-note").value.trim();
+    const file = el("#appt-attach-input").files[0];
+
+    if (file) {
+      const check = validateAttachment(file);
+      if (!check.valid) {
+        alert(
+          check.reason === "too-large"
+            ? "Arquivo muito grande (máximo 5MB)."
+            : "Tipo de arquivo não suportado (use foto ou PDF)."
+        );
+        return;
+      }
+      if (!Cloud.online || !Cloud.enabled || !Cloud.uid) {
+        toast("Anexar exige conexão com a internet");
+        return;
+      }
+    }
+
     const evt = { id: apptEditingId || newId(), type: apptType, ts: ts.toISOString(), title };
     if (note) evt.note = note;
-    STORE.put(evt);
-    close();
-    toast("Compromisso salvo");
-    afterMutation();
+
+    el("#appt-save").disabled = true;
+    try {
+      if (file) {
+        evt.attachment = await Cloud.uploadAttachment(evt.id, file);
+        if (apptOriginalAttachment && apptOriginalAttachment.path !== evt.attachment.path) {
+          Cloud.deleteAttachment(apptOriginalAttachment.path);
+        }
+      } else if (apptAttachment) {
+        evt.attachment = apptAttachment;
+      } else if (apptOriginalAttachment) {
+        Cloud.deleteAttachment(apptOriginalAttachment.path);
+      }
+      STORE.put(evt);
+      close();
+      toast("Compromisso salvo");
+      afterMutation();
+    } catch (e) {
+      console.warn("appt attachment:", e);
+      alert("Não deu para salvar o anexo: " + (e && e.message ? e.message : e));
+    } finally {
+      el("#appt-save").disabled = false;
+    }
   });
 
   el("#appt-delete").addEventListener("click", () => {

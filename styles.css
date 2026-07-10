@@ -691,6 +691,49 @@ main {
   height: 21px;
 }
 
+.appt-attach-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 13px;
+  border: 1px solid var(--glass-brd);
+  background: var(--field-bg);
+  margin-bottom: 15px;
+}
+.appt-attach-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.appt-attach-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+.appt-attach-open {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.appt-attach-remove {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--c-sick);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 4px;
+}
+
 /* ---------- Modais ---------- */
 .modal-backdrop {
   position: fixed;
