@@ -3,6 +3,50 @@
 > Epic 2 — Módulo Saúde. Frente escolhida pelo usuário para começar: consultas/exames com anexo.
 > Ver `memory.md` e `~/.claude/plans/meu-objetivo-com-este-memoized-bear.md` para o roadmap completo.
 
+## Revisão (2026-07-10, pós-implementação): pivô para base64 no Firestore
+
+A primeira versão desta Story foi implementada e revisada inteiramente com **Firebase Storage**
+(seções abaixo, mantidas como histórico). Ao tentar habilitar o Storage no console, descobriu-se
+que, desde outubro de 2024, o Google **exige o plano Blaze** (pay-as-you-go, cartão cadastrado)
+para qualquer bucket novo — o Spark (grátis) não cobre mais Storage, ao contrário do
+Firestore/Auth. Essa era uma suposição errada da versão original desta spec ("plano Spark/grátis,
+não exige billing"). O usuário decidiu **não** ativar o Blaze e seguir sem serviço de arquivos
+separado.
+
+**Nova arquitetura (substitui a seção "Storage & regras de segurança" abaixo):** o anexo é
+comprimido no navegador (canvas, redimensiona + reduz qualidade JPEG) e guardado como **base64
+embutido no próprio documento do evento no Firestore** — mesmo mecanismo que já sincroniza título/
+nota/hora, sem serviço novo, sem risco de cobrança. Isso implica duas mudanças de escopo:
+
+- **Só foto, sem PDF.** Um PDF não comprime da mesma forma e não caberia com segurança no limite
+  de 1MiB por documento do Firestore — suporte a PDF fica para uma fase futura (ex.: se um dia
+  ativarem o Blaze, ou outro serviço).
+- **Upload deixa de existir** (não há mais round-trip de rede): comprimir e guardar é uma operação
+  local, então salvar um compromisso com foto funciona **100% offline**, como qualquer outro campo
+  — a lógica de "bloquear só o upload quando offline" (Tasks 2/3 originais) foi removida por não
+  fazer mais sentido.
+- **Exclusão em cascata deixa de ser necessária**: como o anexo vive dentro do próprio documento do
+  evento, apagar/tombstonar o evento já remove o anexo — não há mais um objeto remoto separado para
+  limpar (a Task 5 original — `Cloud.deleteAttachment` no `#appt-delete` — foi revertida).
+
+Novo modelo de dados: `attachment: { url: "data:image/jpeg;base64,...", name: "foto.jpg" }` — o
+campo `url` continua se chamando `url` (não `dataUrl`) de propósito, para que todo o código de
+exibição (preview no editor, thumbnail na Agenda, "Abrir em nova aba") continue funcionando sem
+mudança, já que um `data:` URI é um valor válido para `src`/`href` igual a um link do Storage.
+Campos `path`/`type`/`size` (que existiam para o Storage) são removidos — sem `type`, o branch
+"PDF vs imagem" na Agenda também é removido (agora é sempre imagem).
+
+Novo limite: em vez de 5MB no arquivo original, o que importa agora é o **tamanho do base64
+resultante após compressão**, com orçamento de ~700KB (deixando folga sob o 1MiB do documento
+Firestore, que também carrega outros campos do evento). O arquivo de entrada continua validado
+(deve ser `image/*`), com um limite de sanidade generoso (15MB) só para não travar o navegador
+tentando comprimir um arquivo absurdamente grande — quem garante o tamanho final é a compressão,
+não mais uma checagem simples de "arquivo ≤ 5MB".
+
+As seções "Storage & regras de segurança" e as menções a Firebase Storage/Cloud.uploadAttachment/
+Cloud.deleteAttachment abaixo descrevem a arquitetura **abandonada** — mantidas só como registro
+histórico da primeira tentativa, não como especificação vigente.
+
 ## Objetivo
 
 Permitir anexar 1 arquivo (foto ou PDF, até 5MB) a qualquer compromisso da Agenda (`appt_medical`,
