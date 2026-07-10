@@ -9,7 +9,7 @@ import { summaryForDay } from "./src/domain/summary.js";
 import { milkReminderState } from "./src/domain/reminder.js";
 import { seriesForRange, activeAvg } from "./src/domain/trends.js";
 import { mergeRemote as mergeRemoteFn } from "./src/domain/sync.js";
-import { validateAttachment } from "./src/domain/attachments.js";
+import { validateAttachment, isDataUrlWithinBudget } from "./src/domain/attachments.js";
 
 /* ------------------------------ Ícones (SVG) ----------------------------- */
 /* Conjunto de ícones "duotone" (forma sólida + camadas translúcidas na mesma
@@ -679,8 +679,7 @@ function initDayModal() {
 /* ============================== Agenda ================================== */
 let apptEditingId = null,
   apptType = "appt_medical",
-  apptOriginalAttachment = null, // anexo como veio do evento ao abrir o editor (p/ apagar do Storage se substituído/removido)
-  apptAttachment = null; // anexo atual desejado ao salvar (null = nenhum)
+  apptAttachment = null; // anexo atual desejado ao salvar (null = nenhum); { url: "data:image/...", name }
 
 function renderApptAttachmentPreview() {
   const box = el("#appt-attach-preview");
@@ -693,11 +692,46 @@ function renderApptAttachmentPreview() {
     return;
   }
   box.hidden = false;
-  thumb.hidden = !apptAttachment.type.startsWith("image/");
-  if (!thumb.hidden) thumb.src = apptAttachment.url;
+  thumb.hidden = false;
+  thumb.src = apptAttachment.url;
   name.textContent = apptAttachment.name;
-  open.hidden = !apptAttachment.path;
-  if (apptAttachment.path) open.href = apptAttachment.url;
+  open.hidden = false;
+  open.href = apptAttachment.url;
+}
+
+function compressImageToDataUrl(file, maxWidth, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Não deu para ler o arquivo."));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Não deu para abrir a imagem."));
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+const ATTACHMENT_COMPRESSION_ATTEMPTS = [
+  { maxWidth: 1000, quality: 0.7 },
+  { maxWidth: 700, quality: 0.5 },
+  { maxWidth: 480, quality: 0.4 },
+];
+
+async function compressAttachment(file) {
+  for (const { maxWidth, quality } of ATTACHMENT_COMPRESSION_ATTEMPTS) {
+    const dataUrl = await compressImageToDataUrl(file, maxWidth, quality);
+    if (isDataUrlWithinBudget(dataUrl)) return dataUrl;
+  }
+  return null;
 }
 
 function renderAgenda() {
@@ -775,7 +809,6 @@ function renderAgenda() {
 function openApptEditor(opts = {}) {
   apptEditingId = opts.id || null;
   apptType = opts.type || "appt_medical";
-  apptOriginalAttachment = opts.attachment || null;
   apptAttachment = opts.attachment || null;
   el("#appt-title").value = opts.title || "";
   el("#appt-note").value = opts.note || "";
@@ -816,27 +849,36 @@ function initAgenda() {
     if (e.target === modal) close();
   });
 
-  el("#appt-attach-input").addEventListener("change", () => {
+  el("#appt-attach-input").addEventListener("change", async () => {
     const file = el("#appt-attach-input").files[0];
     if (!file) return;
     const check = validateAttachment(file);
     if (!check.valid) {
       alert(
         check.reason === "too-large"
-          ? "Arquivo muito grande (máximo 5MB)."
-          : "Tipo de arquivo não suportado (use foto ou PDF)."
+          ? "Arquivo muito grande."
+          : "Tipo de arquivo não suportado (use foto)."
       );
       el("#appt-attach-input").value = "";
       return;
     }
-    apptAttachment = {
-      path: null, // só é definido depois do upload, ao salvar
-      url: file.type.startsWith("image/") ? URL.createObjectURL(file) : "",
-      name: file.name,
-      type: file.type,
-      size: file.size,
-    };
-    renderApptAttachmentPreview();
+    el("#appt-attach-input").disabled = true;
+    try {
+      const dataUrl = await compressAttachment(file);
+      if (!dataUrl) {
+        alert("Imagem muito grande mesmo após compressão — tente outra foto.");
+        el("#appt-attach-input").value = "";
+        return;
+      }
+      apptAttachment = { url: dataUrl, name: file.name };
+      renderApptAttachmentPreview();
+    } catch (e) {
+      console.warn("compressAttachment:", e);
+      alert("Não deu para processar essa imagem.");
+      el("#appt-attach-input").value = "";
+    } finally {
+      el("#appt-attach-input").disabled = false;
+    }
   });
 
   el("#appt-attach-remove").addEventListener("click", () => {
@@ -845,7 +887,7 @@ function initAgenda() {
     renderApptAttachmentPreview();
   });
 
-  el("#appt-save").addEventListener("click", async () => {
+  el("#appt-save").addEventListener("click", () => {
     const raw = el("#appt-time").value;
     const ts = new Date(raw);
     if (!raw || isNaN(ts)) {
@@ -858,60 +900,19 @@ function initAgenda() {
       return;
     }
     const note = el("#appt-note").value.trim();
-    const file = el("#appt-attach-input").files[0];
-
-    let uploadSkipped = false;
-    if (file) {
-      const check = validateAttachment(file);
-      if (!check.valid) {
-        alert(
-          check.reason === "too-large"
-            ? "Arquivo muito grande (máximo 5MB)."
-            : "Tipo de arquivo não suportado (use foto ou PDF)."
-        );
-        return;
-      }
-      if (!Cloud.online || !Cloud.enabled || !Cloud.uid) {
-        uploadSkipped = true;
-      }
-    }
 
     const evt = { id: apptEditingId || newId(), type: apptType, ts: ts.toISOString(), title };
     if (note) evt.note = note;
+    if (apptAttachment) evt.attachment = apptAttachment;
 
-    el("#appt-save").disabled = true;
-    try {
-      if (file && !uploadSkipped) {
-        evt.attachment = await Cloud.uploadAttachment(evt.id, file);
-        if (apptOriginalAttachment && apptOriginalAttachment.path !== evt.attachment.path) {
-          Cloud.deleteAttachment(apptOriginalAttachment.path);
-        }
-      } else if (file && uploadSkipped) {
-        // upload não pôde ser feito (offline): preserva o anexo já existente, se houver,
-        // e nunca persiste o objeto de preview local (apptAttachment com path: null).
-        if (apptOriginalAttachment) evt.attachment = apptOriginalAttachment;
-      } else if (apptAttachment) {
-        evt.attachment = apptAttachment;
-      } else if (apptOriginalAttachment) {
-        Cloud.deleteAttachment(apptOriginalAttachment.path);
-      }
-      STORE.put(evt);
-      close();
-      toast(
-        uploadSkipped ? "Compromisso salvo — anexo não enviado (sem conexão)" : "Compromisso salvo"
-      );
-      afterMutation();
-    } catch (e) {
-      console.warn("appt attachment:", e);
-      alert("Não deu para salvar o anexo: " + (e && e.message ? e.message : e));
-    } finally {
-      el("#appt-save").disabled = false;
-    }
+    STORE.put(evt);
+    close();
+    toast("Compromisso salvo");
+    afterMutation();
   });
 
   el("#appt-delete").addEventListener("click", () => {
     if (apptEditingId && confirm("Excluir este compromisso?")) {
-      if (apptOriginalAttachment) Cloud.deleteAttachment(apptOriginalAttachment.path);
       STORE.remove(apptEditingId);
       close();
       afterMutation();
