@@ -696,7 +696,22 @@ function renderApptAttachmentPreview() {
   thumb.src = apptAttachment.url;
   name.textContent = apptAttachment.name;
   open.hidden = false;
-  open.href = apptAttachment.url;
+}
+
+function openAttachmentViewer(attachment) {
+  if (!attachment) return;
+  el("#attach-viewer-img").src = attachment.url;
+  const dl = el("#attach-viewer-download");
+  dl.href = attachment.url;
+  dl.download = attachment.name || "foto.jpg";
+  el("#attach-viewer-modal").hidden = false;
+}
+function initAttachmentViewer() {
+  const modal = el("#attach-viewer-modal");
+  el("#attach-viewer-close").addEventListener("click", () => (modal.hidden = true));
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.hidden = true;
+  });
 }
 
 function compressImageToDataUrl(file, maxWidth, quality) {
@@ -758,7 +773,7 @@ function renderAgenda() {
       fmtTime(d);
     const meta = e.note ? `${when} · ${escapeHtml(e.note)}` : when;
     const attach = e.attachment
-      ? `<span class="appt-attach-badge" data-url="${escapeHtml(e.attachment.url)}"><img src="${escapeHtml(e.attachment.url)}" alt="" /></span>`
+      ? `<span class="appt-attach-badge" data-url="${escapeHtml(e.attachment.url)}" data-name="${escapeHtml(e.attachment.name || "foto.jpg")}"><img src="${escapeHtml(e.attachment.url)}" alt="" /></span>`
       : "";
     return `
       <button class="appt-card${isPast ? " past" : ""}" data-id="${e.id}">
@@ -797,7 +812,7 @@ function renderAgenda() {
   list.querySelectorAll(".appt-attach-badge").forEach((badge) =>
     badge.addEventListener("click", (ev) => {
       ev.stopPropagation();
-      window.open(badge.dataset.url, "_blank", "noopener");
+      openAttachmentViewer({ url: badge.dataset.url, name: badge.dataset.name });
     })
   );
 }
@@ -882,6 +897,8 @@ function initAgenda() {
     el("#appt-attach-input").value = "";
     renderApptAttachmentPreview();
   });
+
+  el("#appt-attach-open").addEventListener("click", () => openAttachmentViewer(apptAttachment));
 
   el("#appt-save").addEventListener("click", () => {
     const raw = el("#appt-time").value;
@@ -1376,6 +1393,7 @@ function init() {
   initEventEditor();
   initDayModal();
   initAgenda();
+  initAttachmentViewer();
   initTrends();
   initMenu();
   initSync();

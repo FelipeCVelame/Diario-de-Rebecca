@@ -272,9 +272,7 @@
           <div class="appt-attach-preview" id="appt-attach-preview" hidden>
             <img class="appt-attach-thumb" id="appt-attach-thumb" alt="" hidden />
             <span class="appt-attach-name" id="appt-attach-name"></span>
-            <a class="appt-attach-open" id="appt-attach-open" target="_blank" rel="noopener"
-              >Abrir</a
-            >
+            <button type="button" class="appt-attach-open" id="appt-attach-open">Ver</button>
             <button type="button" class="appt-attach-remove" id="appt-attach-remove">
               Remover
             </button>
@@ -285,6 +283,27 @@
         <div class="modal-actions">
           <button class="btn-danger" id="appt-delete" hidden>Excluir</button>
           <button class="btn-primary" id="appt-save">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== MODAL: VISUALIZAR ANEXO ===================== -->
+    <div class="modal-backdrop" id="attach-viewer-modal" hidden>
+      <div class="modal modal-day">
+        <div class="modal-day-head">
+          <h3>Anexo</h3>
+          <button
+            class="modal-close"
+            id="attach-viewer-close"
+            data-icon="close"
+            aria-label="Fechar"
+          ></button>
+        </div>
+        <img class="attach-viewer-img" id="attach-viewer-img" alt="" />
+        <div class="modal-actions">
+          <a class="btn-primary attach-viewer-download" id="attach-viewer-download" download
+            >Baixar foto</a
+          >
         </div>
       </div>
     </div>
