@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**Before starting work, also read [`memory.md`](memory.md)** — it tracks Epic-by-Epic progress,
+what's been decided/postponed and why, and standing user preferences. Update it whenever an Epic
+item is completed, postponed, or a new durable decision is made.
+
 ## What this is
 
 "Diário da Rebecca" — a local-first PWA for tracking a baby's routine (wake, milk ml, meals,
