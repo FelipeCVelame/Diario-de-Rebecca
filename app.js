@@ -905,6 +905,7 @@ function initAgenda() {
 
   el("#appt-delete").addEventListener("click", () => {
     if (apptEditingId && confirm("Excluir este compromisso?")) {
+      if (apptOriginalAttachment) Cloud.deleteAttachment(apptOriginalAttachment.path);
       STORE.remove(apptEditingId);
       close();
       afterMutation();
