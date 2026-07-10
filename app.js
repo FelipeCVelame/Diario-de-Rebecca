@@ -1062,6 +1062,9 @@ const Cloud = {
   auth: null,
   uid: null,
   unsub: null,
+  online: typeof navigator !== "undefined" ? navigator.onLine : true,
+  pending: new Set(),
+  failing: new Map(),
 
   init() {
     const cfg = window.FIREBASE_CONFIG;
@@ -1104,10 +1107,28 @@ const Cloud = {
     Object.keys(evt).forEach((k) => {
       if (evt[k] !== undefined) clean[k] = evt[k];
     });
+    this.failing.delete(evt.id);
+    this.pending.add(evt.id);
+    updateSyncUI();
     this.col()
       .doc(evt.id)
       .set(clean)
-      .catch(() => {});
+      .then(() => {
+        this.pending.delete(evt.id);
+        updateSyncUI();
+      })
+      .catch((e) => {
+        this.pending.delete(evt.id);
+        this.failing.set(evt.id, evt);
+        console.warn("sync pushEvent:", e);
+        updateSyncUI();
+      });
+  },
+
+  retryFailed() {
+    const evts = [...this.failing.values()];
+    this.failing.clear();
+    evts.forEach((evt) => this.pushEvent(evt));
   },
 
   start() {
@@ -1150,6 +1171,27 @@ function updateSyncUI() {
   const tx = el("#menu-sync .mi-tx");
   if (tx)
     tx.textContent = `Sincronização: ${!configured ? "não configurada" : user ? "ativa" : "entrar"}`;
+
+  const pill = el("#sync-status");
+  pill.classList.remove("is-offline", "is-syncing", "is-error", "is-synced");
+  if (!configured || !user) {
+    pill.hidden = true;
+    return;
+  }
+  pill.hidden = false;
+  if (Cloud.failing.size > 0) {
+    pill.classList.add("is-error");
+    pill.textContent = "Erro ao sincronizar — toque para tentar de novo";
+  } else if (!Cloud.online) {
+    pill.classList.add("is-offline");
+    pill.textContent = "Offline — sincroniza ao reconectar";
+  } else if (Cloud.pending.size > 0) {
+    pill.classList.add("is-syncing");
+    pill.textContent = "Sincronizando…";
+  } else {
+    pill.classList.add("is-synced");
+    pill.textContent = "Sincronizado";
+  }
 }
 
 function initSync() {
@@ -1158,6 +1200,22 @@ function initSync() {
     updateSyncUI();
     el("#menu-modal").hidden = true;
     modal.hidden = false;
+  });
+
+  el("#sync-status").addEventListener("click", () => {
+    if (Cloud.failing.size > 0) Cloud.retryFailed();
+  });
+  window.addEventListener("online", () => {
+    const wasOffline = !Cloud.online;
+    Cloud.online = true;
+    if (wasOffline) toast("Conectado novamente");
+    Cloud.retryFailed();
+    updateSyncUI();
+  });
+  window.addEventListener("offline", () => {
+    Cloud.online = false;
+    toast("Você está offline — os registros continuam sendo salvos");
+    updateSyncUI();
   });
   el("#sync-close").addEventListener("click", () => (modal.hidden = true));
   modal.addEventListener("click", (e) => {

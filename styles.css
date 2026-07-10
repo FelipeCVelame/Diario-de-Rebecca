@@ -249,6 +249,55 @@ body {
   color: var(--muted);
   text-transform: capitalize;
 }
+.sync-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 4px 10px 4px 8px;
+  border: 1px solid var(--glass-brd);
+  border-radius: 999px;
+  background: var(--glass);
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: default;
+}
+.sync-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+.sync-status.is-syncing::before {
+  background: var(--accent-2);
+  animation: sync-pulse 1s ease-in-out infinite;
+}
+.sync-status.is-offline::before {
+  background: var(--c-wake);
+}
+.sync-status.is-error {
+  cursor: pointer;
+  border-color: var(--c-sick-brd);
+  color: var(--c-sick);
+}
+.sync-status.is-error::before {
+  background: var(--c-sick);
+}
+.sync-status.is-synced::before {
+  background: var(--c-food);
+}
+@keyframes sync-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
 .header-menu {
   background: var(--glass-2);
   border: 1px solid var(--glass-brd);

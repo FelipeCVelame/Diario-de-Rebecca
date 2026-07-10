@@ -44,10 +44,13 @@
 - [x] Docs base: requirements, architecture, tech_stack, design_guidelines, patterns_catalog, kanban, workflow
 - [ ] Split completo de `app.js` em `src/data/` (STORE + Cloud) e `src/ui/` (views/modais) — hoje só `src/domain/` foi extraído; `STORE`, `Cloud` e toda a renderização ainda vivem em `app.js`. Adiado: é uma refatoração maior, arriscada num app em uso real, e não foi pedida explicitamente ainda — decidir com o usuário antes de iniciar.
 
-## Backlog
-
 ### Epic 1 — Confiabilidade para uso diário
-_(ainda não iniciado — ver plano para o checklist completo)_
+- [x] Estados de conexão/erro visíveis (pill no header: offline/sincronizando/sincronizado/erro), retry manual (toque no pill) e automático (ao reconectar)
+- [ ] Prompt de "nova versão disponível" — descartado: o usuário confirmou que o PWA já atualiza automaticamente no celular, não precisa
+- [ ] Endurecer sync no Firebase Emulator (cross-account negado, LWW, tombstone)
+- [ ] Ícones PNG reais (instalação bonita no iOS)
+
+## Backlog
 
 ### Epic 2 — Módulo Saúde
 _(ainda não iniciado)_
