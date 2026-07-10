@@ -734,6 +734,27 @@ main {
   padding: 6px 4px;
 }
 
+.appt-attach-badge {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--field-bg);
+  border: 1px solid var(--glass-brd);
+  cursor: pointer;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--muted-2);
+}
+.appt-attach-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 /* ---------- Modais ---------- */
 .modal-backdrop {
   position: fixed;

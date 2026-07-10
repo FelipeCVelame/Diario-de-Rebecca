@@ -723,11 +723,19 @@ function renderAgenda() {
       " · " +
       fmtTime(d);
     const meta = e.note ? `${when} · ${escapeHtml(e.note)}` : when;
+    const attach = e.attachment
+      ? `<span class="appt-attach-badge" data-url="${e.attachment.url}">${
+          e.attachment.type.startsWith("image/")
+            ? `<img src="${e.attachment.url}" alt="" />`
+            : "PDF"
+        }</span>`
+      : "";
     return `
       <button class="appt-card${isPast ? " past" : ""}" data-id="${e.id}">
         <span class="appt-date"><span class="ad-day">${dd}</span><span class="ad-mon">${mon}</span></span>
         <span class="appt-body"><b>${escapeHtml(e.title || def.label)}</b><span class="appt-meta">${meta}</span></span>
         <span class="appt-ico chip-appt">${svgIcon(def.ic)}</span>
+        ${attach}
       </button>`;
   };
 
@@ -753,6 +761,13 @@ function renderAgenda() {
           note: e.note,
           attachment: e.attachment,
         });
+    })
+  );
+
+  list.querySelectorAll(".appt-attach-badge").forEach((badge) =>
+    badge.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      window.open(badge.dataset.url, "_blank", "noopener");
     })
   );
 }
