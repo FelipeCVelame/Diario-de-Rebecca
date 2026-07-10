@@ -19,8 +19,14 @@
 - [x] Ícones PNG reais (180/192/512) para instalação no iOS/Android
 - [ ] **Postergado por decisão do usuário**: endurecer sync no Firebase Emulator — bloqueado porque `firebase-tools` exige Java 21+ e a máquina só tem Java 8. Retomar só se/quando instalar um JDK 21 portátil.
 
-## Epic 2 — Módulo Saúde — não iniciado
-Frentes: crescimento (peso/altura + percentil OMS), vacinas (calendário PNI + lembretes), anexos em consultas (Firebase Storage), medicamentos com lembrete recorrente. **Ainda não decidido qual entra primeiro** — perguntar ao usuário antes de começar.
+## Epic 2 — Módulo Saúde — iniciado
+- [x] Anexos em consultas/exames (foto/PDF, Firebase Storage) — 1 anexo por compromisso
+  (`appt_medical`/`appt_class`/`appt_other`), exige conexão para subir o arquivo (o resto do
+  compromisso continua salvando offline), exclusão em cascata best-effort no Storage ao apagar o
+  compromisso, limite 5MB, regras de Storage documentadas em `FIREBASE-SETUP.md` (passo 5b).
+- [ ] Crescimento (peso/altura + percentil OMS)
+- [ ] Vacinas (calendário PNI + lembretes)
+- [ ] Medicamentos com lembrete recorrente
 
 ## Epic 3 — Registro mais rico & insights — não iniciado
 ## Epic 4 — Notificações Web Push (app fechado) — não iniciado

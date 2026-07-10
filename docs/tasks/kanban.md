@@ -50,10 +50,13 @@
 - [x] Ícones PNG reais (180/192/512, gerados do `icon.svg` com `sharp` — usado uma vez e removido do `package.json`) para instalação melhor no iOS/Android; `sw.js` cache bump p/ v4
 - [ ] Endurecer sync no Firebase Emulator (cross-account negado, LWW, tombstone) — **postergado por decisão do usuário**: `firebase-tools` atual exige Java 21+, esta máquina só tem Java 8. A cobertura de `test/domain/sync.test.js` (6 casos, lógica pura de merge) já existe; isso só adicionaria confirmação contra as regras reais do Firestore. Retomar se/quando instalar um JDK 21.
 
-## Backlog
-
 ### Epic 2 — Módulo Saúde
-_(ainda não iniciado)_
+- [x] Consultas/exames com anexo (foto/PDF, Firebase Storage) — 1 anexo por compromisso, exigindo conexão para upload, exclusão em cascata best-effort ao apagar o compromisso
+- [ ] Crescimento (peso/altura + percentil OMS)
+- [ ] Vacinas (calendário PNI + lembretes)
+- [ ] Medicamentos com lembrete recorrente
+
+## Backlog
 
 ### Epic 3 — Registro mais rico & insights
 _(ainda não iniciado)_
@@ -84,4 +87,4 @@ _(nenhum Epic completo ainda — Epic 0 está quase lá, ver acima)_
 - [ ] Every Epic here matches the roadmap plan file
 - [ ] No Epic is in Done with unchecked items
 
-**Last Updated:** 2026-07-09
+**Last Updated:** 2026-07-10
