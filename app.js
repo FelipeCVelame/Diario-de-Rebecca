@@ -1060,6 +1060,7 @@ const Cloud = {
   enabled: false,
   db: null,
   auth: null,
+  storage: null,
   uid: null,
   unsub: null,
   online: typeof navigator !== "undefined" ? navigator.onLine : true,
@@ -1073,6 +1074,7 @@ const Cloud = {
       firebase.initializeApp(cfg);
       this.auth = firebase.auth();
       this.db = firebase.firestore();
+      this.storage = firebase.storage();
       this.db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
       this.enabled = true;
       onEventWrite = (evt) => this.pushEvent(evt);
@@ -1099,6 +1101,23 @@ const Cloud = {
   },
   signOut() {
     return this.auth.signOut();
+  },
+
+  uploadAttachment(eventId, file) {
+    if (!this.enabled || !this.uid) return Promise.reject(new Error("cloud-disabled"));
+    const path = `accounts/${this.uid}/attachments/${eventId}/${file.name}`;
+    return this.storage
+      .ref(path)
+      .put(file, { contentType: file.type })
+      .then((snap) => snap.ref.getDownloadURL())
+      .then((url) => ({ path, url, name: file.name, type: file.type, size: file.size }));
+  },
+  deleteAttachment(path) {
+    if (!this.enabled || !path) return Promise.resolve();
+    return this.storage
+      .ref(path)
+      .delete()
+      .catch((e) => console.warn("deleteAttachment:", e));
   },
 
   pushEvent(evt) {

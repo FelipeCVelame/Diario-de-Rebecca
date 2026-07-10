@@ -53,6 +53,31 @@ service cloud.firestore {
 
 Isso garante que só quem está logado acessa os próprios dados (ninguém mais lê/escreve).
 
+## 5b) Ativar o Storage (para anexos de consultas/exames)
+1. No menu lateral: **Build → Storage → Começar** (aceite as opções padrão de local/região,
+   igual ao Firestore).
+2. Na aba **Regras**, cole exatamente isto e **Publicar**:
+
+```
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /accounts/{uid}/attachments/{eventId}/{fileName} {
+      allow read, write: if request.auth != null && request.auth.uid == uid
+                          && request.resource.size < 5 * 1024 * 1024
+                          && request.resource.contentType.matches('image/.*|application/pdf');
+    }
+  }
+}
+```
+
+Isso garante o mesmo isolamento por conta do Firestore: só quem está logado acessa os próprios
+anexos, com limite de 5MB e só imagens/PDF.
+
+3. Confira se `firebase-config.js` tem o campo `storageBucket` preenchido (o Firebase Console já
+   inclui esse campo ao gerar a config do app web — se o projeto foi criado antes disso, copie a
+   config de novo em Configurações do projeto → Geral → Seus apps).
+
 ## 6) Regerar e republicar
 ```
 powershell -ExecutionPolicy Bypass -File build.ps1
