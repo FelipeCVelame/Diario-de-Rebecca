@@ -860,6 +860,7 @@ function initAgenda() {
     const note = el("#appt-note").value.trim();
     const file = el("#appt-attach-input").files[0];
 
+    let uploadSkipped = false;
     if (file) {
       const check = validateAttachment(file);
       if (!check.valid) {
@@ -871,8 +872,7 @@ function initAgenda() {
         return;
       }
       if (!Cloud.online || !Cloud.enabled || !Cloud.uid) {
-        toast("Anexar exige conexão com a internet");
-        return;
+        uploadSkipped = true;
       }
     }
 
@@ -881,11 +881,15 @@ function initAgenda() {
 
     el("#appt-save").disabled = true;
     try {
-      if (file) {
+      if (file && !uploadSkipped) {
         evt.attachment = await Cloud.uploadAttachment(evt.id, file);
         if (apptOriginalAttachment && apptOriginalAttachment.path !== evt.attachment.path) {
           Cloud.deleteAttachment(apptOriginalAttachment.path);
         }
+      } else if (file && uploadSkipped) {
+        // upload não pôde ser feito (offline): preserva o anexo já existente, se houver,
+        // e nunca persiste o objeto de preview local (apptAttachment com path: null).
+        if (apptOriginalAttachment) evt.attachment = apptOriginalAttachment;
       } else if (apptAttachment) {
         evt.attachment = apptAttachment;
       } else if (apptOriginalAttachment) {
@@ -893,7 +897,9 @@ function initAgenda() {
       }
       STORE.put(evt);
       close();
-      toast("Compromisso salvo");
+      toast(
+        uploadSkipped ? "Compromisso salvo — anexo não enviado (sem conexão)" : "Compromisso salvo"
+      );
       afterMutation();
     } catch (e) {
       console.warn("appt attachment:", e);
