@@ -758,11 +758,7 @@ function renderAgenda() {
       fmtTime(d);
     const meta = e.note ? `${when} · ${escapeHtml(e.note)}` : when;
     const attach = e.attachment
-      ? `<span class="appt-attach-badge" data-url="${escapeHtml(e.attachment.url)}">${
-          e.attachment.type.startsWith("image/")
-            ? `<img src="${escapeHtml(e.attachment.url)}" alt="" />`
-            : "PDF"
-        }</span>`
+      ? `<span class="appt-attach-badge" data-url="${escapeHtml(e.attachment.url)}"><img src="${escapeHtml(e.attachment.url)}" alt="" /></span>`
       : "";
     return `
       <button class="appt-card${isPast ? " past" : ""}" data-id="${e.id}">

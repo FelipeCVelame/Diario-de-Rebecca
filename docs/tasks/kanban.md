@@ -51,7 +51,7 @@
 - [ ] Endurecer sync no Firebase Emulator (cross-account negado, LWW, tombstone) — **postergado por decisão do usuário**: `firebase-tools` atual exige Java 21+, esta máquina só tem Java 8. A cobertura de `test/domain/sync.test.js` (6 casos, lógica pura de merge) já existe; isso só adicionaria confirmação contra as regras reais do Firestore. Retomar se/quando instalar um JDK 21.
 
 ### Epic 2 — Módulo Saúde
-- [x] Consultas/exames com anexo (foto/PDF, Firebase Storage) — 1 anexo por compromisso, exigindo conexão para upload, exclusão em cascata best-effort ao apagar o compromisso
+- [x] Consultas/exames com anexo (só foto, comprimida no navegador e guardada como base64 no Firestore) — 1 anexo por compromisso, funciona 100% offline; Firebase Storage foi descartado porque exige o plano Blaze desde out/2024 (ver spec)
 - [ ] Crescimento (peso/altura + percentil OMS)
 - [ ] Vacinas (calendário PNI + lembretes)
 - [ ] Medicamentos com lembrete recorrente

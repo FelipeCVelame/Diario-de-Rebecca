@@ -20,10 +20,12 @@
 - [ ] **Postergado por decisão do usuário**: endurecer sync no Firebase Emulator — bloqueado porque `firebase-tools` exige Java 21+ e a máquina só tem Java 8. Retomar só se/quando instalar um JDK 21 portátil.
 
 ## Epic 2 — Módulo Saúde — iniciado
-- [x] Anexos em consultas/exames (foto/PDF, Firebase Storage) — 1 anexo por compromisso
-  (`appt_medical`/`appt_class`/`appt_other`), exige conexão para subir o arquivo (o resto do
-  compromisso continua salvando offline), exclusão em cascata best-effort no Storage ao apagar o
-  compromisso, limite 5MB, regras de Storage documentadas em `FIREBASE-SETUP.md` (passo 5b).
+- [x] Anexos em consultas/exames (`appt_medical`/`appt_class`/`appt_other`) — só foto (sem PDF),
+  comprimida no navegador (canvas) e guardada como base64 dentro do próprio documento do evento no
+  Firestore; funciona 100% offline, sem serviço externo. Firebase Storage foi tentado primeiro mas
+  descartado: desde out/2024 exige o plano Blaze (cartão cadastrado) mesmo dentro da franquia
+  grátis, e o usuário optou por não ativar. Ver spec para o histórico completo da mudança de
+  arquitetura.
 - [ ] Crescimento (peso/altura + percentil OMS)
 - [ ] Vacinas (calendário PNI + lembretes)
 - [ ] Medicamentos com lembrete recorrente
