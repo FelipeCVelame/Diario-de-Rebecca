@@ -48,7 +48,7 @@
 - [x] Estados de conexão/erro visíveis (pill no header: offline/sincronizando/sincronizado/erro), retry manual (toque no pill) e automático (ao reconectar)
 - [ ] Prompt de "nova versão disponível" — descartado: o usuário confirmou que o PWA já atualiza automaticamente no celular, não precisa
 - [ ] Endurecer sync no Firebase Emulator (cross-account negado, LWW, tombstone)
-- [ ] Ícones PNG reais (instalação bonita no iOS)
+- [x] Ícones PNG reais (180/192/512, gerados do `icon.svg` com `sharp` — usado uma vez e removido do `package.json`) para instalação melhor no iOS/Android; `sw.js` cache bump p/ v4
 
 ## Backlog
 

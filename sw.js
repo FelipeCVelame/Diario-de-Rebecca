@@ -1,6 +1,6 @@
 /* Service worker — offline (app shell) + notificações.
    Pronto para Web Push (evento 'push') na fase de notificação em segundo plano. */
-const CACHE = "baby-diary-v3";
+const CACHE = "baby-diary-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,9 @@ const ASSETS = [
   "./app.js",
   "./manifest.webmanifest",
   "./icon.svg",
+  "./icon-180.png",
+  "./icon-192.png",
+  "./icon-512.png",
 ];
 
 self.addEventListener("install", (e) => {

@@ -35,7 +35,7 @@ Write-Host "OK -> $out ($([math]::Round((Get-Item $out).Length/1KB,1)) KB)"
 # 4) Monta a pasta dist/ (o PWA multi-arquivo, pronto para hospedar).
 $dist = Join-Path $dir 'dist'
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
-foreach ($f in @('index.html','styles.css','app.js','sw.js','manifest.webmanifest','icon.svg','firebase-config.js')) {
+foreach ($f in @('index.html','styles.css','app.js','sw.js','manifest.webmanifest','icon.svg','icon-180.png','icon-192.png','icon-512.png','firebase-config.js')) {
   Copy-Item (Join-Path $dir $f) (Join-Path $dist $f) -Force
 }
 Write-Host "OK -> $dist (PWA para hospedar)"
