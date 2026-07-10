@@ -47,7 +47,7 @@
 ### Epic 1 — Confiabilidade para uso diário
 - [x] Estados de conexão/erro visíveis (pill no header: offline/sincronizando/sincronizado/erro), retry manual (toque no pill) e automático (ao reconectar)
 - [ ] Prompt de "nova versão disponível" — descartado: o usuário confirmou que o PWA já atualiza automaticamente no celular, não precisa
-- [ ] Endurecer sync no Firebase Emulator (cross-account negado, LWW, tombstone)
+- [ ] Endurecer sync no Firebase Emulator (cross-account negado, LWW, tombstone) — **bloqueado**: `firebase-tools` atual exige Java 21+; esta máquina só tem Java 8 (JRE antigo mencionado em `FASE-0-ANDROID-SETUP.md`). Precisa instalar um JDK 21 portátil (mesmo tipo de fricção que tivemos com o Node) antes de tentar de novo — decidir com o usuário se vale a pena para um projeto de 2 pessoas.
 - [x] Ícones PNG reais (180/192/512, gerados do `icon.svg` com `sharp` — usado uma vez e removido do `package.json`) para instalação melhor no iOS/Android; `sw.js` cache bump p/ v4
 
 ## Backlog
