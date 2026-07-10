@@ -44,11 +44,11 @@
 - [x] Docs base: requirements, architecture, tech_stack, design_guidelines, patterns_catalog, kanban, workflow
 - [ ] Split completo de `app.js` em `src/data/` (STORE + Cloud) e `src/ui/` (views/modais) — hoje só `src/domain/` foi extraído; `STORE`, `Cloud` e toda a renderização ainda vivem em `app.js`. Adiado: é uma refatoração maior, arriscada num app em uso real, e não foi pedida explicitamente ainda — decidir com o usuário antes de iniciar.
 
-### Epic 1 — Confiabilidade para uso diário
+### Epic 1 — Confiabilidade para uso diário ✅ (para efeitos práticos)
 - [x] Estados de conexão/erro visíveis (pill no header: offline/sincronizando/sincronizado/erro), retry manual (toque no pill) e automático (ao reconectar)
-- [ ] Prompt de "nova versão disponível" — descartado: o usuário confirmou que o PWA já atualiza automaticamente no celular, não precisa
-- [ ] Endurecer sync no Firebase Emulator (cross-account negado, LWW, tombstone) — **bloqueado**: `firebase-tools` atual exige Java 21+; esta máquina só tem Java 8 (JRE antigo mencionado em `FASE-0-ANDROID-SETUP.md`). Precisa instalar um JDK 21 portátil (mesmo tipo de fricção que tivemos com o Node) antes de tentar de novo — decidir com o usuário se vale a pena para um projeto de 2 pessoas.
+- [x] Prompt de "nova versão disponível" — descartado por decisão do usuário: o PWA já atualiza automaticamente no celular, não precisa
 - [x] Ícones PNG reais (180/192/512, gerados do `icon.svg` com `sharp` — usado uma vez e removido do `package.json`) para instalação melhor no iOS/Android; `sw.js` cache bump p/ v4
+- [ ] Endurecer sync no Firebase Emulator (cross-account negado, LWW, tombstone) — **postergado por decisão do usuário**: `firebase-tools` atual exige Java 21+, esta máquina só tem Java 8. A cobertura de `test/domain/sync.test.js` (6 casos, lógica pura de merge) já existe; isso só adicionaria confirmação contra as regras reais do Firestore. Retomar se/quando instalar um JDK 21.
 
 ## Backlog
 
